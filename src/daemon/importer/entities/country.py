@@ -10,15 +10,15 @@ class Country:
 
     def to_xml(self):
         el = ET.Element("Country")
-        el.set("id", str(self._id))
-        el.set("name", self._name)
+        el.set("Id", str(self._id))
+        el.set("Name", self._name)
         return el
 
     def get_id(self):
         return self._id
 
     def __str__(self):
-        return f"name: {self._name}, id:{self._id}"
+        return f"Name: {self._name}, Id:{self._id}"
 
 
 Country.counter = 0
