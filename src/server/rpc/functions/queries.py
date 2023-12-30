@@ -25,7 +25,7 @@ class QueryFunctions:
 
                 SELECT nome_jogador FROM jogadores WHERE countryRef IN ( SELECT id_pais
                     FROM ( SELECT unnest(xpath('//Countries/Country/@Id', xml))::text as id_pais, unnest(xpath('//Countries/Country/@Name', xml))::text as nome_pais
-                    FROM imported_documents WHERE deleted_on IS NULL ) countries WHERE country_name = '{pais}' ); """
+                    FROM imported_documents WHERE deleted_on IS NULL ) countries WHERE nome_pais = '{pais}' ); """
 
         dados = database.selectTudo(query)
         database.disconnect()
