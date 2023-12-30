@@ -11,7 +11,7 @@ import {
   Autocomplete,
   TextField,
 } from "@mui/material";
-import useAPI from "../../crud/crudAPI";
+import useAPI from "../crud/crudAPI";
 
 function PlayersPage() {
   const { GET } = useAPI();
@@ -34,7 +34,7 @@ function PlayersPage() {
         }
       })
       .catch((error) => {
-        console.error("Error fetching countries:", error);
+        console.error("Erro:", error);
         setCountries([]);
       });
   }, []);
@@ -81,8 +81,8 @@ function PlayersPage() {
           <>
             <Typography variant="h5" gutterBottom>
               {procData.length > 0
-                ? `Results from search: "${selectedCountry}"`
-                : `No brand found from country "${selectedCountry}"`}
+                ? `Jogadores: "${selectedCountry}"`
+                : `Não ha nada nengue"${selectedCountry}"`}
             </Typography>
             {procData.map((item, index) => (
               <Paper key={index} elevation={3} sx={{ padding: "1rem", margin: "1rem" }}>

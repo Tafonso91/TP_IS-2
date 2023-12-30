@@ -1,24 +1,21 @@
-import sys
+import xmlrpc.client
 
-from flask import Flask
-
-PORT = int(sys.argv[1]) if len(sys.argv) >= 2 else 9000
+from flask import Flask,request
 
 app = Flask(__name__)
-app.config["DEBUG"] = True
 
+# Endpoint na sua API Flask para chamar a função do servidor XML-RPC
+@app.route('/api/players_country', methods=['GET'])
+def get_players_by_country():
+    # Configurações do servidor XML-RPC
+    server_url = 'http://rpc-server:9000'  # Substitua pelo seu URL do servidor XML-RPC
+    server = xmlrpc.client.ServerProxy(server_url)
+    nome_pais=request.args.get("nome_pais")
+    # Chama a função no servidor XML-RPC
+    players = server.fetch_players_by_country(nome_pais)
 
-@app.route('/api/best_players', methods=['GET'])
-def get_best_players():
-    return [{
-        "id": "7674fe6a-6c8d-47b3-9a1f-18637771e23b",
-        "name": "Ronaldo",
-        "country": "Portugal",
-        "position": "Striker",
-        "imgUrl": "https://cdn-icons-png.flaticon.com/512/805/805401.png",
-        "number": 7
-    }]
-
+    # Retorna os dados obtidos pela função diretamente na resposta
+    return players
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=PORT)
+    app.run(host="0.0.0.0", port=9001)  # Porta diferente para a API Flask, se desejar
