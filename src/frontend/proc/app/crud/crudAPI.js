@@ -22,6 +22,7 @@ export default (URL = "http://localhost:20004/api") => {
   const DELETE = (route) => {
     return axios.delete(`${URL}${route}`, options);
   };
+  
 
   return {
     GET,

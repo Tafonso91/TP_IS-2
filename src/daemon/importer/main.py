@@ -33,21 +33,15 @@ def convert_csv_to_xml(in_path, out_path):
 
 def import_doc(file_name, xml):
     database = Database()
-    try:
-        database.insert(
-            "INSERT INTO imported_documents (file_name, xml) VALUES (%s,%s)", (file_name, xml))
-    except Exception as error:
-        print(error)
-        raise error
+    database.insert(
+    "INSERT INTO imported_documents (file_name, xml) VALUES (%s,%s)", (file_name, xml))
+    
 
 def convert_doc(src, dst, filesize):
     database = Database()
-    try:
-        database.insert(
-            "INSERT INTO converted_documents(src, dst, file_size) VALUES (%s,%s,%s)", (src, dst, filesize))
-    except Exception as error:
-        print(error)
-        raise error
+    database.insert(
+    "INSERT INTO converted_documents(src, dst, file_size) VALUES (%s,%s,%s)", (src, dst, filesize))
+    
 class CSVHandler(FileSystemEventHandler):
     def __init__(self, input_path, output_path):
         self._output_path = output_path
@@ -59,46 +53,46 @@ class CSVHandler(FileSystemEventHandler):
             event.event_type = "created"
             self.dispatch(event)
 
-    async def convert_csv(self, csv_path):
+    async def convert_csv(self, path_csv):
         # here we avoid converting the same file again
         # !TODO: check converted files in the database
-        if csv_path in await self.get_converted_files():
+        if path_csv in await self.get_converted_files():
             return
 
-        print(f"new file to convert: '{csv_path}'")
+        print(f"new file to convert: '{path_csv}'")
 
         # we generate a unique file name for the XML file
-        xml_path = generate_unique_file_name(self._output_path)
+        path_xml = generate_unique_file_name(self._output_path)
 
         # we do the conversion
 
         # !TODO: once the conversion is done, we should updated the converted_documents tables
-        convert_csv_to_xml(csv_path, xml_path)
+        convert_csv_to_xml(path_csv, path_xml)
         
 
         try:
-            convert_doc(src = csv_path, dst = xml_path, filesize = os.stat(xml_path).st_size)
+            convert_doc(src = path_csv, dst = path_xml, filesize = os.stat(path_xml).st_size)
 
-            with open(xml_path, 'r', encoding='utf-8') as xml_file:
+            with open(path_xml, 'r', encoding='utf-8') as xml_file:
                 xml_content = xml_file.read()
 
-            import_doc(file_name = csv_path, xml = xml_content)
+            import_doc(file_name = path_csv, xml = xml_content)
 
 
-            print(f"xml_file was generated: '{xml_path}'")
+            print(f"xml_file was generated: '{path_xml}'")
         except:
-            os.remove(xml_path)    
+            os.remove(path_xml)    
 
         
 
 
     async def get_converted_files(self):
-        files = []
+        ficheiros = []
         database = Database()
-        for file in database.selectTudo("SELECT src FROM converted_documents"):
-            files.append(file[0])
+        for ficheiro in database.selectTudo("SELECT src FROM converted_documents"):
+            ficheiros.append(ficheiro[0])
 
-        return files
+        return ficheiros
 
     def on_created(self, event):
         if not event.is_directory and event.src_path.endswith(".csv"):

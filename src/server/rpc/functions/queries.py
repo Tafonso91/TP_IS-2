@@ -13,19 +13,31 @@ class QueryFunctions:
         finally:
             database.disconnect()
     
- 
-    def fetch_players_by_country(pais):
+    def lista_paises(self):
+        database = Database()
+        list_paises = []
+
+        dados = database.selectTudo("SELECT unnest(xpath('//Countries/Country/@Name', xml)) as result FROM imported_documents")
+        database.disconnect()
+
+        for pais in dados:
+            if not pais in list_paises:
+                list_paises.append(pais)
+
+        return list_paises
+    
+    def fetch_players_by_country(self, pais):
         database = Database()
         dados_jogadores = []
 
         query = f""" WITH jogadores AS (
                 SELECT  unnest(xpath('//Players/Player/Information/@Name', xml))::text as nome_jogador, 
                     unnest(xpath('//Players/Player/@countryRef', xml))::text as countryRef 
-                    FROM imported_documents WHERE deleted_on IS NULL )
+                    FROM imported_documents)
 
                 SELECT nome_jogador FROM jogadores WHERE countryRef IN ( SELECT id_pais
                     FROM ( SELECT unnest(xpath('//Countries/Country/@Id', xml))::text as id_pais, unnest(xpath('//Countries/Country/@Name', xml))::text as nome_pais
-                    FROM imported_documents WHERE deleted_on IS NULL ) countries WHERE nome_pais = '{pais}' ); """
+                    FROM imported_documents) countries WHERE nome_pais = '{pais}' ); """
 
         dados = database.selectTudo(query)
         database.disconnect()

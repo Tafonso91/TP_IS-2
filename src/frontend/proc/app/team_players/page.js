@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -8,98 +9,102 @@ import {
   ListItem,
   ListItemText,
   CircularProgress,
-  Autocomplete,
-  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import useAPI from "../crud/crudAPI";
 
 function PlayersPage() {
   const { GET } = useAPI();
 
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [procData, setProcData] = useState(null);
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [Data, setData] = useState(null);
   const [countries, setCountries] = useState([]);
 
-  const handleCountryChange = (event, newValue) => {
+  const handleCountryChange = async (event) => {
+    const newValue = event.target.value;
     setSelectedCountry(newValue);
+
+    try {
+      const result = await GET(`/players_country?nome_pais=${newValue}`);
+      if (result.data) {
+        const apidata = result.data.map((player) => {
+          return { player: player };
+        });
+        setData(apidata);
+      } else {
+        setData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setData([]);
+    }
   };
 
   useEffect(() => {
-    GET("/countries")
-      .then((result) => {
+    const fetchCountries = async () => {
+      try {
+        const result = await GET("/countries");
         if (result.data) {
           setCountries(result.data);
         } else {
           setCountries([]);
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Erro:", error);
         setCountries([]);
-      });
+      }
+    };
+
+    fetchCountries();
   }, []);
 
-  useEffect(() => {
-    if (selectedCountry) {
-      GET(`/playersByCountry?nome_pais=${selectedCountry}`)
-        .then((result) => {
-          if (result.data) {
-            const apidata = result.data.map((player) => {
-              return { player: player };
-            });
-            setProcData(apidata);
-          } else {
-            setProcData([]);
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-          setProcData([]);
-        });
-    }
-  }, [selectedCountry]);
-
   return (
-    <Container>
-      <Box mt={4}>
-        <Typography variant="h2" gutterBottom>
-          Country
+    <Container maxWidth="md">
+      <Box my={4}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Players by Country
         </Typography>
-
-        <Autocomplete
-          id="country-selector"
-          options={countries}
-          getOptionLabel={(option) => option.toString()}
-          value={selectedCountry}
-          onChange={handleCountryChange}
-          renderInput={(params) => (
-            <TextField {...params} label="Select or enter a country" variant="outlined" />
-          )}
-        />
-
-        {procData ? (
-          <>
-            <Typography variant="h5" gutterBottom>
-              {procData.length > 0
-                ? `Jogadores: "${selectedCountry}"`
-                : `Não ha nada nengue"${selectedCountry}"`}
-            </Typography>
-            {procData.map((item, index) => (
-              <Paper key={index} elevation={3} sx={{ padding: "1rem", margin: "1rem" }}>
-                <ListItem>
-                  <ListItemText primary={item.brand} />
-                </ListItem>
-              </Paper>
+        <FormControl variant="outlined" fullWidth>
+          <InputLabel id="country-select-label">Escolhe um país</InputLabel>
+          <Select
+            labelId="country-select-label"
+            id="country-select"
+            value={selectedCountry}
+            onChange={handleCountryChange}
+            label="Select Country"
+          >
+            {countries.map((country, index) => (
+              <MenuItem key={index} value={country[0]}>
+                {country[0]}
+              </MenuItem>
             ))}
-          </>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-            <CircularProgress />
-          </div>
-        )}
+          </Select>
+        </FormControl>
+        <Box mt={2}>
+          <Paper>
+            <Box p={2}>
+              {Data ? (
+                <Box>
+                  {Data.map((data, index) => (
+                    <ListItem key={index}>
+                      <ListItemText primary={data.player[0]} />
+                    </ListItem>
+                  ))}
+                </Box>
+              ) : (
+                selectedCountry ? <CircularProgress /> : "--"
+              )}
+            </Box>
+          </Paper>
+        </Box>
       </Box>
     </Container>
   );
 }
 
 export default PlayersPage;
+
+

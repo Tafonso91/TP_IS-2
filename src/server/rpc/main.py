@@ -13,6 +13,7 @@ if __name__ == "__main__":
     with SimpleXMLRPCServer(('0.0.0.0', PORT), requestHandler=RequestHandler) as server:
         server.register_introspection_functions()
         query_functions = QueryFunctions()
+        
 
         def signal_handler(signum, frame):
             print("received signal")
@@ -30,6 +31,8 @@ if __name__ == "__main__":
         signal.signal(signal.SIGINT, signal_handler)
 
         server.register_function(query_functions.fetch_players_by_country)
+        server.register_function(query_functions.lista_paises)
+
         
 
  

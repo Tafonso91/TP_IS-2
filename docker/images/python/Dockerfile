@@ -17,7 +17,12 @@ RUN npm install nodemon -g
 RUN apk add g++
 
 # upgrade pip
+
 RUN python -m pip install --upgrade pip
+
+
+# install Flask-CORS
+RUN pip install flask-cors
 
 # dependencies
 COPY ./requirements.txt ./
