@@ -18,4 +18,4 @@ def get_players_by_country():
     return players
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=9001)  # Porta diferente para a API Flask, se desejar
+    app.run(host="0.0.0.0", port=9000)  # Porta diferente para a API Flask, se desejar

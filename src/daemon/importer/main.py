@@ -4,14 +4,14 @@ import uuid
 
 import os
 
-import psycopg2
+
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileCreatedEvent
 
 from utils.csv_to_xml_converter import CSVtoXMLConverter
 from utils.database import Database
 
-filesConverter = []
+
 
 
 
@@ -27,17 +27,27 @@ def generate_unique_file_name(directory):
 
 def convert_csv_to_xml(in_path, out_path):
     converter = CSVtoXMLConverter(in_path)
-    xml = converter.to_xml_str()
     file = open(out_path, "w")
-    file.write(xml)
-    return xml
+    file.write(converter.to_xml_str())
 
-def import_doc(xml_path, xml_content):
+
+def import_doc(file_name, xml):
     database = Database()
-    database.insert(
-        "INSERT INTO imported_documents (file_name, xml) VALUES (%s,%s)", (xml_path, xml_content))
+    try:
+        database.insert(
+            "INSERT INTO imported_documents (file_name, xml) VALUES (%s,%s)", (file_name, xml))
+    except Exception as error:
+        print(error)
+        raise error
 
-
+def convert_doc(src, dst, filesize):
+    database = Database()
+    try:
+        database.insert(
+            "INSERT INTO converted_documents(src, dst, file_size) VALUES (%s,%s,%s)", (src, dst, filesize))
+    except Exception as error:
+        print(error)
+        raise error
 class CSVHandler(FileSystemEventHandler):
     def __init__(self, input_path, output_path):
         self._output_path = output_path
@@ -63,45 +73,32 @@ class CSVHandler(FileSystemEventHandler):
         # we do the conversion
 
         # !TODO: once the conversion is done, we should updated the converted_documents tables
-        xml= convert_csv_to_xml(csv_path, xml_path)
-        print(f"new xml file generated: '{xml_path}'")
+        convert_csv_to_xml(csv_path, xml_path)
+        
 
-        # !TODO: we should store the XML document into the imported_documents table
+        try:
+            convert_doc(src = csv_path, dst = xml_path, filesize = os.stat(xml_path).st_size)
 
-        with open(xml_path, 'r', encoding='utf-8') as xml_file:
-            xml_content = xml_file.read()
+            with open(xml_path, 'r', encoding='utf-8') as xml_file:
+                xml_content = xml_file.read()
 
-            import_doc(xml_path, xml_content)
-            print("XML inserido com sucesso na BD")
+            import_doc(file_name = csv_path, xml = xml_content)
+
+
+            print(f"xml_file was generated: '{xml_path}'")
+        except:
+            os.remove(xml_path)    
 
         
 
 
     async def get_converted_files(self):
-        # !TODO: you should retrieve from the database the files that were already converted before
-        connection = None
-        cursor = None
-        try:
-            connection = connectToDB()
-            cursor = connection.cursor()
+        files = []
+        database = Database()
+        for file in database.selectTudo("SELECT src FROM converted_documents"):
+            files.append(file[0])
 
-            cursor.execute("SELECT src from converted_documents")
-
-            result = cursor.fetchall()
-
-            for file in result:
-                filesConverter.append(file)
-
-
-        except (Exception, psycopg2.Error) as error:
-            print("Failed to fetch data", error)
-
-        finally:
-            if connection:
-                cursor.close()
-                connection.close()
-
-        return filesConverter
+        return files
 
     def on_created(self, event):
         if not event.is_directory and event.src_path.endswith(".csv"):
