@@ -31,5 +31,29 @@ def get_countries():
     # Retorna os dados obtidos pela função diretamente na resposta
     return countries
 
+@app.route('/api/players_club', methods=['GET'])
+def get_players_by_club():
+    # Configurações do servidor XML-RPC
+    server_url = 'http://rpc-server:9000'  # Substitua pelo seu URL do servidor XML-RPC
+    server = xmlrpc.client.ServerProxy(server_url)
+    nome_club=request.args.get("nome_club")
+    # Chama a função no servidor XML-RPC
+    jogadores = server.fetch_players_by_club(nome_club)
+
+    # Retorna os dados obtidos pela função diretamente na resposta
+    return jogadores
+@app.route('/api/clubs', methods=['GET'])
+def get_clubs():
+    # Configurações do servidor XML-RPC
+    server_url = 'http://rpc-server:9000'  # Substitua pelo seu URL do servidor XML-RPC
+    server = xmlrpc.client.ServerProxy(server_url)
+    # Chama a função no servidor XML-RPC
+    clubs = server.lista_clubes()
+
+    # Retorna os dados obtidos pela função diretamente na resposta
+    return clubs
+
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=PORT)  # Porta diferente para a API Flask, se desejar

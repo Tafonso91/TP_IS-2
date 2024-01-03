@@ -26,6 +26,19 @@ class QueryFunctions:
 
         return list_paises
     
+    def lista_clubes(self):
+        database = Database()
+        list_clubes = []
+
+        dados = database.selectTudo("SELECT unnest(xpath('//Teams/Club/@Name', xml)) as result FROM imported_documents")
+        database.disconnect()
+
+        for club in dados:
+            if not club in list_clubes:
+                list_clubes.append(club)
+
+        return list_clubes
+    
     def fetch_players_by_country(self, pais):
         database = Database()
         dados_jogadores = []
@@ -48,7 +61,24 @@ class QueryFunctions:
 
         return dados_jogadores
 
+    def fetch_players_by_club(self, club_name):
+        database = Database()
+        players = []
 
+        query = f"""
+            SELECT unnest(xpath('//Club[@Name="{club_name}"]/Players/Player/Information/@Name', xml))::text as player_name
+            FROM imported_documents
+            WHERE xpath_exists('//Club[@Name="{club_name}"]', xml);
+        """
+
+        player_data = database.selectTudo(query)
+        database.disconnect()
+
+        for player in player_data:
+            if player not in players:
+                players.append(player)
+
+        return players
 
     @staticmethod
     def lista_jogadores(nome_equipa):
