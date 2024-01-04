@@ -21,7 +21,7 @@ class Database:
                     database=self.database
                 )
                 self.cursor = self.connection.cursor()
-                print("\nConnection estabalecida com sucesso.")
+                print("\nConexão estabalecida com sucesso.")
             except psycopg2.Error as error:
                 print(f"\nError: {error}")
 

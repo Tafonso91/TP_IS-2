@@ -16,6 +16,46 @@ export class ClubService {
             },
         });
     }
+    async getClubByName(clubName: string): Promise<any> {
+        return this.prisma.club.findFirst({
+            where: {
+                club_name: clubName,
+            },
+        });
+    }
+    async deleteClubByName(clubName: string): Promise<any> {
+        return this.prisma.club.deleteMany({
+            where: {
+                club_name: clubName,
+            },
+        });
+    }
+ 
+
+
+
+async updateClubName(currentClubName: string, newClubName: string): Promise<any> {
+    const club = await this.prisma.club.findFirst({
+        where: {
+            club_name: currentClubName,
+        },
+    });
+
+    if (!club) {
+        throw new Error(`Club '${currentClubName}' not found`);
+    }
+
+    return this.prisma.club.update({
+        where: {
+            id: club.id,
+        },
+        data: {
+            club_name: newClubName,
+        },
+    });
+}
+
+
 }
 
 
