@@ -6,7 +6,7 @@ CREATE EXTENSION IF NOT EXISTS POSTGIS_TOPOLOGY;
 CREATE TABLE public.country (
     id   uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     country_name VARCHAR(50),
-    geom GEOMETRY,
+    geom GEOMETRY NULL,
     created_on      TIMESTAMP NOT NULL DEFAULT NOW(),
 	updated_on      TIMESTAMP NOT NULL DEFAULT NOW() 
 );
@@ -63,8 +63,20 @@ CREATE TABLE public.teachers (
 INSERT INTO teachers(name, city) VALUES('Luís Teófilo', 'Porto');
 INSERT INTO teachers(name, city) VALUES('Ricardo Castro', 'Braga');
 
-INSERT INTO club(club_name) VALUES('Benfica');
-INSERT INTO club(club_name) VALUES('Porto');
+INSERT INTO club(club_name) VALUES('Atlético dos Arcos');
+INSERT INTO club(club_name) VALUES('Areosense');
+
+INSERT INTO strong_foot(foot_name) VALUES('Right');
+INSERT INTO strong_foot(foot_name) VALUES('Left');
+
+INSERT INTO country(country_name) VALUES('Taiwan');
+
+INSERT INTO player (name, height, price, salary, club_id, country_id, foot_id)
+VALUES ('Zé Roberto', 180, '$10M', '$100K', 
+        (SELECT id FROM club WHERE club_name = 'Atlético dos Arcos'), 
+        (SELECT id FROM country WHERE country_name = 'Taiwan'), 
+        (SELECT id FROM strong_foot WHERE foot_name = 'Right'));
+
 
 ALTER TABLE player
     ADD CONSTRAINT player_club_id_fk

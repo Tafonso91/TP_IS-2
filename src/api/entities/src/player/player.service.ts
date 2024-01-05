@@ -24,12 +24,7 @@ export class PlayerService {
         });
     }
 
-    async deletePlayerById(playerId: string): Promise<any> {
-        return this.prisma.player.deleteMany({
-            where: {
-                player_id: playerId,
-            },
-        });
+ 
     }
  
 
@@ -38,7 +33,7 @@ export class PlayerService {
 
 
 
-}
+
 
 
 
