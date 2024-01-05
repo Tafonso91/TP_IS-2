@@ -1,32 +1,33 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import crudAPI from '../crud/crudAPI'; 
+import crudAPI from '../crud/crudAPI';
 
 export default function CountriesPage() {
-  const [clubs, setClubs] = useState([]);
+  const [countries, setCountries] = useState([]);
 
   useEffect(() => {
-    const fetchClubs = async () => {
+    const fetchCountries = async () => {
       try {
-        const response = await crudAPI().GET('/country'); // Chamada para listar os clubes
-        setClubs(response.data); // Define os clubes no estado local
+        const response = await crudAPI().GET('/country'); 
+        setCountries(response.data); 
       } catch (error) {
-        console.error('Erro ao buscar clubes:', error);
+        console.error('Erro ao buscar países:', error);
       }
     };
 
-    fetchClubs();
+    fetchCountries();
   }, []);
 
   return (
     <main>
       <b>Countries Page</b>: 
       <ul>
-        {clubs.map((club) => (
-          <li key={club.id}>{club.club_name}</li> 
+        {countries.map((country) => (
+          <li key={country.id}>{country.country_name}</li> 
         ))}
       </ul>
     </main>
   );
 }
+
 

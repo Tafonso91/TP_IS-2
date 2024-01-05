@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export default (URL = "http://localhost:20001/api") => {
+export default (URL = "http://localhost:20001") => {
   const options = {
     headers: {
       "Content-Type": "application/json",
