@@ -6,7 +6,7 @@ import { PlayerController } from './player.controller';
     providers: [PlayerService],
     controllers: [PlayerController]
 })
-export class ClubModule {}
+export class PlayerModule {}
 
 
 

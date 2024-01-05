@@ -12,48 +12,14 @@ export class CountryService {
         return this.prisma.country.create({
             data: {
                 country_name: countryData.country_name,
-
+                
             },
         });
     }
-    async getCountryByName(countryName: string): Promise<any> {
-        return this.prisma.country.findFirst({
-            where: {
-                country_name: countryName,
-            },
-        });
-    }
-    async deleteCountryByName(countryName: string): Promise<any> {
-        return this.prisma.country.deleteMany({
-            where: {
-                country_name: countryName,
-            },
-        });
-    }
- 
-
-
-
-async updateCountryName(currentCountryName: string, newCountryName: string): Promise<any> {
-    const country = await this.prisma.country.findFirst({
-        where: {
-            country_name: currentCountryName,
-        },
-    });
-
-    if (!country) {
-        throw new Error(`Country '${currentCountryName}' not found`);
+    async getCountryById(countryId: string): Promise<any> { 
+        return this.prisma.country.findUnique({ where: { id: countryId } }); 
     }
 
-    return this.prisma.country.update({
-        where: {
-            id: country.id,
-        },
-        data: {
-            country_name: newCountryName,
-        },
-    });
-}
 
 
 }

@@ -10,10 +10,10 @@ export class CountryController {
         return this.countryService.findAll();
     }
 
-    @Get(':countryName')
-    async getCountryByName(@Param('countryName') countryName: string) {
+    @Get(':countryId')
+    async getCountryById(@Param('countryId') countryId: string) { 
         try {
-            const country = await this.countryService.getCountryByName(countryName);
+            const country = await this.countryService.getCountryById(countryId); 
             if (!country) {
                 throw new HttpException('Country not found', HttpStatus.NOT_FOUND);
             }
@@ -23,42 +23,15 @@ export class CountryController {
         }
     }
 
-    @Post(':countryName')
-    async createCountry(@Param('countryName') countryName: string) {
+    @Post() 
+    async createCountry(@Body() countryData: { country_name: string }) { 
         try {
-            const countryData = {
-                country_name: countryName,
-   
-            };
             return await this.countryService.createCountry(countryData);
         } catch (error) {
             throw new HttpException('Failed to create country', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
-    @Delete(':countryName')
-    async deleteCountryByName(@Param('countryName') countryName: string) {
-        try {
-            return await this.countryService.deleteCountryByName(countryName);
-        } catch (error) {
-            throw new HttpException('Failed to delete country', HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
 }
-
-
-    @Put(':currentCountryName')
-    async updateCountryName(@Param('currentCountryName') currentCountryName: string, @Body() updateData: { newCountryName: string }) {
-        try {
-            return await this.countryService.updateCountryName(currentCountryName, updateData.newCountryName);
-        } catch (error) {
-            throw new HttpException('Failed to update country name', HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    
-}
-
-
-
 
 
