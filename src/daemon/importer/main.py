@@ -27,8 +27,13 @@ def generate_unique_file_name(directory):
 
 def convert_csv_to_xml(in_path, out_path):
     converter = CSVtoXMLConverter(in_path)
-    file = open(out_path, "w")
-    file.write(converter.to_xml_str())
+    xml_content = converter.to_xml_str()
+
+    with open(out_path, "w") as file:
+        file.write(xml_content)
+
+    return os.path.basename(out_path)  
+
 
 
 def import_doc(file_name, xml):
@@ -69,14 +74,14 @@ class CSVHandler(FileSystemEventHandler):
         # !TODO: once the conversion is done, we should updated the converted_documents tables
         convert_csv_to_xml(path_csv, path_xml)
         
-
+        xml_file_name = convert_csv_to_xml(path_csv, path_xml)
         try:
             convert_doc(src = path_csv, dst = path_xml, filesize = os.stat(path_xml).st_size)
 
             with open(path_xml, 'r', encoding='utf-8') as xml_file:
                 xml_content = xml_file.read()
 
-            import_doc(file_name = path_csv, xml = xml_content)
+            import_doc(file_name = xml_file_name, xml = xml_content)
 
 
             print(f"xml_file was generated: '{path_xml}'")
