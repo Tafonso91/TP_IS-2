@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-    "time"
+	"time"
+
 	_ "github.com/lib/pq"
+	"github.com/streadway/amqp"
+	_ "github.com/streadway/amqp"
 )
 
 const jsonFilename = "arquivos.json"
@@ -51,10 +54,56 @@ func main() {
 	}
 
 	atualizarJSON(nomesArquivos)
-	 
+	
 	time.Sleep(time.Minute)
 }
 
+    func enviarMensagemBroker(novosNomes []string) {
+        // Estabelece conexão com o servidor RabbitMQ
+        conn, err := amqp.Dial("amqp://is:is@broker:5672/is")
+        if err != nil {
+            log.Fatalf("Erro ao conectar ao servidor RabbitMQ: %s", err)
+        }
+        defer conn.Close()
+
+        // Cria um canal
+        ch, err := conn.Channel()
+        if err != nil {
+            log.Fatalf("Erro ao abrir o canal: %s", err)
+        }
+        defer ch.Close()
+
+        // Declara uma fila no RabbitMQ
+        queue, err := ch.QueueDeclare(
+            "menssagem", // Nome da fila
+            false,          // durable
+            false,          // delete when unused
+            false,          // exclusive
+            false,          // no-wait
+            nil,            // arguments
+        )
+        if err != nil {
+            log.Fatalf("Erro ao declarar a fila: %s", err)
+        }
+
+        // Envia cada novo nome como uma mensagem para a fila
+        for _, nome := range novosNomes {
+            err = ch.Publish(
+                "",            // exchange
+                queue.Name,    // routing key
+                false,         // mandatory
+                false,         // immediate
+                amqp.Publishing{
+                    ContentType: "text/plain",
+                    Body:        []byte(nome),
+                },
+            )
+            if err != nil {
+                log.Fatalf("Erro ao enviar mensagem para a fila: %s", err)
+            }
+            fmt.Printf("Mensagem enviada para a fila: %s\n", nome)
+        }
+    }
 func atualizarJSON(novosNomes []string) {
     var arquivos Arquivos
 
@@ -102,6 +151,7 @@ func atualizarJSON(novosNomes []string) {
     }
 
     fmt.Println("Arquivo JSON atualizado com sucesso!")
+    enviarMensagemBroker(novosNomes)
 }
 
 
