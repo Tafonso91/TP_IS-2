@@ -226,7 +226,21 @@ services:
          POLLING_FREQ: ${POLLING_FREQ}
        depends_on:
          - db-xml
-         
+
+    # Container that automatically migrates data from db-xml to db-rel
+  migrator1:
+    container_name: migrator1
+    build: docker/images/golang
+    volumes:
+      - ./src/migrator1:/usr/src/app
+      - ./docker/volumes/xml:/xml
+    environment:
+      USE_DEV_MODE: ${USE_DEV_MODE}
+      POLLING_FREQ: ${POLLING_FREQ}
+    depends_on:
+      - db-xml
+      - db-rel
+
 volumes:
   xml-data:
   rel-data:

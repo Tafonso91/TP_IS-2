@@ -7,10 +7,11 @@ import (
 	"log"
 	"os"
 	"time"
-
-	_ "github.com/lib/pq"
+    
+    _ "github.com/lib/pq"
 	"github.com/streadway/amqp"
 	_ "github.com/streadway/amqp"
+
 )
 
 const jsonFilename = "arquivos.json"
@@ -55,7 +56,7 @@ func main() {
 
 	atualizarJSON(nomesArquivos)
 	
-	time.Sleep(time.Minute)
+	time.Sleep(5 * time.Minute)
 }
 
     func enviarMensagemBroker(novosNomes []string) {
@@ -104,54 +105,65 @@ func main() {
             fmt.Printf("Mensagem enviada para a fila: %s\n", nome)
         }
     }
-func atualizarJSON(novosNomes []string) {
-    var arquivos Arquivos
-
-  
-    if _, err := os.Stat(jsonFilename); err == nil {
-        file, err := os.Open(jsonFilename)
-        if err != nil {
-            log.Fatal("Erro ao abrir o arquivo JSON:", err)
+    func atualizarJSON(novosNomes []string) {
+        var arquivos Arquivos
+    
+        // Verificar se o arquivo JSON existe
+        if _, err := os.Stat(jsonFilename); err == nil {
+            file, err := os.Open(jsonFilename)
+            if err != nil {
+                log.Fatal("Erro ao abrir o arquivo JSON:", err)
+            }
+            defer file.Close()
+    
+            decoder := json.NewDecoder(file)
+            err = decoder.Decode(&arquivos)
+            if err != nil {
+                log.Fatal("Erro ao decodificar o arquivo JSON:", err)
+            }
         }
-        defer file.Close()
-
-        decoder := json.NewDecoder(file)
-        err = decoder.Decode(&arquivos)
-        if err != nil {
-            log.Fatal("Erro ao decodificar o arquivo JSON:", err)
-        }
-    }
-
-  
-    nomesExistentes := make(map[string]bool)
-    for _, nome := range arquivos.Nomes {
-        nomesExistentes[nome] = true
-    }
-
-   
-    for _, nome := range novosNomes {
-        if !nomesExistentes[nome] {
-            arquivos.Nomes = append(arquivos.Nomes, nome)
+    
+        // Mapear os nomes de arquivos existentes
+        nomesExistentes := make(map[string]bool)
+        for _, nome := range arquivos.Nomes {
             nomesExistentes[nome] = true
         }
+    
+        // Verificar se há novos arquivos para adicionar
+        var novosArquivos []string
+        for _, nome := range novosNomes {
+            if !nomesExistentes[nome] {
+                novosArquivos = append(novosArquivos, nome)
+                nomesExistentes[nome] = true
+            }
+        }
+    
+        // Se houver novos arquivos, atualize o arquivo JSON e envie mensagens para a fila
+        if len(novosArquivos) > 0 {
+            for _, nome := range novosArquivos {
+                arquivos.Nomes = append(arquivos.Nomes, nome)
+            }
+    
+            // Criar ou sobrescrever o arquivo JSON
+            file, err := os.Create(jsonFilename)
+            if err != nil {
+                log.Fatal("Erro ao criar o arquivo JSON:", err)
+            }
+            defer file.Close()
+    
+            encoder := json.NewEncoder(file)
+            encoder.SetIndent("", "  ")
+            err = encoder.Encode(arquivos)
+            if err != nil {
+                log.Fatal("Erro ao codificar o arquivo JSON:", err)
+            }
+    
+            fmt.Println("Arquivo JSON atualizado com sucesso!")
+            enviarMensagemBroker(novosArquivos)
+        } else {
+            fmt.Println("Não houve novos arquivos para adicionar.")
+        }
     }
-
-  
-    file, err := os.Create(jsonFilename)
-    if err != nil {
-        log.Fatal("Erro ao criar o arquivo JSON:", err)
-    }
-    defer file.Close()
-
-    encoder := json.NewEncoder(file)
-    encoder.SetIndent("", "  ")
-    err = encoder.Encode(arquivos)
-    if err != nil {
-        log.Fatal("Erro ao codificar o arquivo JSON:", err)
-    }
-
-    fmt.Println("Arquivo JSON atualizado com sucesso!")
-    enviarMensagemBroker(novosNomes)
-}
+    
 
 
