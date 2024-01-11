@@ -10,7 +10,7 @@ import (
 	"github.com/antchfx/xmlquery"
 	_ "github.com/lib/pq" 
 	"github.com/streadway/amqp"
-	"github.com/go-resty/resty/v2"
+	
 )
 
 type Country struct {
@@ -20,10 +20,10 @@ type Country struct {
 }
 
 func main() {
-	client := resty.New()
+	
 
 	
-	apiURL := "http://localhost:20001/country"
+	
 	connectionString := "postgres://is:is@db-xml/is?sslmode=disable"
 
 	db, err := sql.Open("postgres", connectionString)
@@ -45,7 +45,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	// Cria um canal
+	
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("Erro ao abrir o canal: %s", err)
@@ -75,7 +75,7 @@ func main() {
 		// Consulta para obter o conteúdo XML do banco de dados com base no fileName
 		xmlQuery := "SELECT xml FROM public.imported_documents WHERE file_name = $1"
 	
-		var xmlData string // Variável para armazenar o conteúdo XML obtido do banco de dados
+		var xmlData string 
 	
 		// Executar a consulta para obter o conteúdo XML do banco de dados
 		err := db.QueryRow(xmlQuery, fileName).Scan(&xmlData)
@@ -96,17 +96,7 @@ func main() {
 		for _, node := range nodes {
 			fmt.Printf("Nome do País: %s\n", node.InnerText())
 	
-			
-	resp, err := client.R().
-	SetBody(map[string]string{"country_name": node.InnerText()}).
-	Post(apiURL)
-
-if err != nil {
-	log.Fatalf("Erro ao enviar solicitação POST para a API: %s", err)
 }
 
-// Verifique a resposta da solicitação HTTP
-fmt.Println("Status:", resp.StatusCode())
-}
 }
 }
