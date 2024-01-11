@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/antchfx/xmlquery"
-	_ "github.com/lib/pq" 
+	_ "github.com/lib/pq"
+	"github.com/go-resty/resty/v2"
 	"github.com/streadway/amqp"
-	
 )
 
 type Country struct {
@@ -18,12 +18,8 @@ type Country struct {
 	Id      string   `xml:"Id,attr"`
 	Name    string   `xml:"Name,attr"`
 }
-
+const apiCountriesCreate = "http://localhost:8080/country"
 func main() {
-	
-
-	
-	
 	connectionString := "postgres://is:is@db-xml/is?sslmode=disable"
 
 	db, err := sql.Open("postgres", connectionString)
@@ -45,7 +41,6 @@ func main() {
 	}
 	defer conn.Close()
 
-	
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("Erro ao abrir o canal: %s", err)
@@ -69,34 +64,64 @@ func main() {
 	// Loop para receber mensagens da fila
 	for msg := range msgs {
 		fileName := string(msg.Body)
-	
+
 		fmt.Printf("Nome do arquivo do XML recebido: %s\n", fileName)
-	
+
 		// Consulta para obter o conteúdo XML do banco de dados com base no fileName
 		xmlQuery := "SELECT xml FROM public.imported_documents WHERE file_name = $1"
-	
-		var xmlData string 
-	
+
+		var xmlData string
+
 		// Executar a consulta para obter o conteúdo XML do banco de dados
 		err := db.QueryRow(xmlQuery, fileName).Scan(&xmlData)
 		if err != nil {
 			log.Fatalf("Erro ao buscar XML do banco de dados: %s", err)
 		}
-	
+
 		// Parse do documento XML usando xmlquery
 		doc, err := xmlquery.Parse(strings.NewReader(xmlData))
 		if err != nil {
 			log.Fatalf("Erro ao analisar o XML: %s", err)
 		}
-	
-		// Executar a consulta XPath para encontrar todos os nomes dos países
-		nodes := xmlquery.Find(doc, "//Countries/Country/@Name")
-	
-		// Iterar sobre os resultados e imprimir os nomes dos países
-		for _, node := range nodes {
-			fmt.Printf("Nome do País: %s\n", node.InnerText())
-	
-}
 
-}
-}
+		nodes := xmlquery.Find(doc, "//Countries/Country")
+		for _, country := range nodes {
+			var name string
+	
+			for _, attr := range country.Attr {
+				if attr.Name.Local == "Name" {
+					name = attr.Value
+					break
+				}
+			}
+	
+			payload := map[string]string{"name": name}
+			jsonData, err := json.Marshal(payload)
+			if err != nil {
+				return err
+			}
+	
+			client := resty.New()
+			resp, err := client.R().
+				SetHeader("Content-Type", "application/json").
+				SetBody(jsonData).
+				Post(apiCountriesCreate)
+	
+			if err != nil {
+				log.Println("Erro ao enviar solicitação:", err)
+				return err
+			}
+	
+			log.Printf("Resposta da API: Status %d\n", resp.StatusCode())
+	
+			if resp.StatusCode() != 201 {
+				return fmt.Errorf("Falha ao chamar a API. Status: %d", resp.StatusCode())
+			}
+	
+			log.Printf("Corpo da resposta: %s\n", resp.Body())
+	
+			time.Sleep(1 * time.Millisecond)
+		}
+	
+		return nil
+	}
