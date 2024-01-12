@@ -82,45 +82,56 @@ func main() {
 		if err != nil {
 			log.Fatalf("Erro ao analisar o XML: %s", err)
 		}
+		var countryNames []string
 
-		nodes := xmlquery.Find(doc, "//Countries/Country/@Name")
+		// Altere a consulta XPath para capturar apenas o país com nome "France"
+		nodes := xmlquery.Find(doc, "//Countries/Country[@Name='France']")
+		
 		for _, country := range nodes {
 			var name string
-
+		
 			for _, attr := range country.Attr {
 				if attr.Name.Local == "Name" {
 					name = attr.Value
 					break
 				}
 			}
-
-			payload := map[string]string{"name": name}
-			jsonData, err := json.Marshal(payload)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			client := resty.New()
-			resp, err := client.R().
-				SetHeader("Content-Type", "application/json").
-				SetBody(jsonData).
-				Post(apiCountriesCreate)
-
-			if err != nil {
-				log.Println("Erro ao enviar solicitação:", err)
-				log.Fatal(err)
-			}
-
-			log.Printf("Resposta da API: Status %d\n", resp.StatusCode())
-
-			if resp.StatusCode() != 201 {
-				log.Fatalf("Falha ao chamar a API. Status: %d", resp.StatusCode())
-			}
-
-			log.Printf("Corpo da resposta: %s\n", resp.Body())
-
-			time.Sleep(1 * time.Millisecond)
-		}
 		
-	}
-}
+			// Adicione o nome ao slice
+			countryNames = append(countryNames, name)
+
+			
+
+			fmt.Printf("Nomes dos países: %v\n", countryNames)
+
+			
+			for _, name := range countryNames {
+				payload := map[string]string{"name": name}
+				jsonData, err := json.Marshal(payload)
+				if err != nil {
+					log.Fatal(err)
+				}
+			
+				client := resty.New()
+				resp, err := client.R().
+					SetHeader("Content-Type", "application/json").
+					SetBody(jsonData).
+					Post(apiCountriesCreate)
+			
+				if err != nil {
+					log.Println("Erro ao enviar solicitação:", err)
+					log.Fatal(err)
+				}
+			
+				log.Printf("Resposta da API para o país %s: Status %d\n", name, resp.StatusCode())
+			
+				if resp.StatusCode() != 201 {
+					log.Fatalf("Falha ao chamar a API para o país %s. Status: %d", name, resp.StatusCode())
+				}
+			
+				log.Printf("Corpo da resposta para o país %s: %s\n", name, resp.Body())
+			
+				time.Sleep(1 * time.Millisecond)
+			}
+			
+		}}}
