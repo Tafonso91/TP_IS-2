@@ -33,6 +33,10 @@ if __name__ == "__main__":
         server.register_function(query_functions.fetch_players_by_country)
         server.register_function(query_functions.lista_paises)
         server.register_function(query_functions.lista_clubes)
+        server.register_function(query_functions.lista_pe)
+        server.register_function(query_functions.lista_todos_jogadores)
+        server.register_function(query_functions.lista_promessas_portugal)
+        server.register_function(query_functions.lista_top_jogadores)
         server.register_function(query_functions.fetch_players_by_club)
 
         

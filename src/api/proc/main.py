@@ -55,5 +55,6 @@ def get_clubs():
 
 
 
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=PORT)  # Porta diferente para a API Flask, se desejar
