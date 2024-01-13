@@ -240,6 +240,7 @@ services:
     depends_on:
       - db-xml
       - db-rel
+      
 
 volumes:
   xml-data:

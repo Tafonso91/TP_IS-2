@@ -2,16 +2,16 @@ package main
 import (
 	"database/sql"
 	"encoding/xml"
-	"encoding/json"
+	
 	"fmt"
 	"log"
 	"strings"
-	"time"
+	
 
 	"github.com/antchfx/xmlquery"
 	_ "github.com/lib/pq"
-	"github.com/go-resty/resty/v2"
 	"github.com/streadway/amqp"
+	"github.com/go-resty/resty/v2"
 )
 
 type Country struct {
@@ -64,7 +64,6 @@ func main() {
 		log.Fatalf("Erro ao consumir mensagens: %s", err)
 	}
 
-	// Loop para receber mensagens da fila
 	for msg := range msgs {
 		fileName := string(msg.Body)
 
@@ -82,56 +81,55 @@ func main() {
 		if err != nil {
 			log.Fatalf("Erro ao analisar o XML: %s", err)
 		}
-		var countryNames []string
 
-		// Altere a consulta XPath para capturar apenas o país com nome "France"
+		// Altere a consulta XPath para capturar todos os países
 		nodes := xmlquery.Find(doc, "//Countries/Country[@Name='France']")
-		
+
 		for _, country := range nodes {
 			var name string
-		
+
 			for _, attr := range country.Attr {
 				if attr.Name.Local == "Name" {
 					name = attr.Value
 					break
 				}
 			}
-		
+
 			// Adicione o nome ao slice
-			countryNames = append(countryNames, name)
+			countryNames := []string{name}
 
-			
-
-			fmt.Printf("Nomes dos países: %v\n", countryNames)
-
-			
-			for _, name := range countryNames {
-				payload := map[string]string{"name": name}
-				jsonData, err := json.Marshal(payload)
-				if err != nil {
-					log.Fatal(err)
-				}
-			
-				client := resty.New()
-				resp, err := client.R().
-					SetHeader("Content-Type", "application/json").
-					SetBody(jsonData).
-					Post(apiCountriesCreate)
-			
-				if err != nil {
-					log.Println("Erro ao enviar solicitação:", err)
-					log.Fatal(err)
-				}
-			
-				log.Printf("Resposta da API para o país %s: Status %d\n", name, resp.StatusCode())
-			
-				if resp.StatusCode() != 201 {
-					log.Fatalf("Falha ao chamar a API para o país %s. Status: %d", name, resp.StatusCode())
-				}
-			
-				log.Printf("Corpo da resposta para o país %s: %s\n", name, resp.Body())
-			
-				time.Sleep(1 * time.Millisecond)
+			// Faça o POST na API para criar o país usando Resty
+			err := createCountry(apiCountriesCreate, countryNames)
+			if err != nil {
+				log.Fatalf("Erro ao criar país via API: %s", err)
 			}
-			
-		}}}
+		}
+	}
+}
+
+func createCountry(apiEndpoint string, countryNames []string) error {
+	client := resty.New()
+
+	for _, name := range countryNames {
+		// Crie a estrutura do corpo da requisição
+		requestBody := map[string]string{"country_name": name}
+
+		// Faça o POST para a API
+		resp, err := client.R().
+			SetBody(requestBody).
+			SetResult(&map[string]interface{}{}).
+			Post(apiEndpoint)
+
+		if err != nil {
+			return fmt.Errorf("Erro ao fazer POST para a API: %s", err)
+		}
+
+		if resp.StatusCode() != 200 {
+			return fmt.Errorf("Falha ao criar país via API. Código de status: %d", resp.StatusCode())
+		}
+
+		fmt.Printf("País criado via API: %s\n", name)
+	}
+
+	return nil
+}
