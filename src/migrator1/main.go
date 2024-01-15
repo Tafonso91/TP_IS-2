@@ -1,12 +1,11 @@
 package main
+
 import (
 	"database/sql"
 	"encoding/xml"
-	
 	"fmt"
 	"log"
 	"strings"
-	
 
 	"github.com/antchfx/xmlquery"
 	_ "github.com/lib/pq"
@@ -17,10 +16,10 @@ import (
 type Country struct {
 	XMLName xml.Name `xml:"Country"`
 	Id      string   `xml:"Id,attr"`
-	Name    string   `xml:"Name,attr"`
+	Name    string   `xml:",chardata"`
 }
 
-const apiCountriesCreate = "http://api-entities:8080/country" 
+const apiCountriesCreate = "http://api-entities:8080/country"
 
 func main() {
 	connectionString := "postgres://is:is@db-xml/is?sslmode=disable"
@@ -64,76 +63,69 @@ func main() {
 		log.Fatalf("Erro ao consumir mensagens: %s", err)
 	}
 
-	var countryNames []string // Mova a declaração para fora do loop principal
+	for msg := range msgs {
+		fileName := string(msg.Body)
 
-for msg := range msgs {
-    fileName := string(msg.Body)
+		fmt.Printf("Nome do arquivo do XML recebido: %s\n", fileName)
 
-    fmt.Printf("Nome do arquivo do XML recebido: %s\n", fileName)
+		xmlQuery := "SELECT xml FROM public.imported_documents WHERE file_name = $1"
 
-    xmlQuery := "SELECT xml FROM public.imported_documents WHERE file_name = $1"
+		var xmlData string
+		err := db.QueryRow(xmlQuery, fileName).Scan(&xmlData)
+		if err != nil {
+			log.Fatalf("Erro ao buscar XML do base de dados: %s", err)
+		}
 
-    var xmlData string
-    err := db.QueryRow(xmlQuery, fileName).Scan(&xmlData)
-    if err != nil {
-        log.Fatalf("Erro ao buscar XML do base de dados: %s", err)
-    }
+		doc, err := xmlquery.Parse(strings.NewReader(xmlData))
+		if err != nil {
+			log.Fatalf("Erro ao analisar o XML: %s", err)
+		}
 
-    doc, err := xmlquery.Parse(strings.NewReader(xmlData))
-    if err != nil {
-        log.Fatalf("Erro ao analisar o XML: %s", err)
-    }
+		nodes := xmlquery.Find(doc, "//Countries/Country")
 
-    // Altere a consulta XPath para capturar todos os países
-    nodes := xmlquery.Find(doc, "//Countries/Country")
+		var countries []Country
 
-    // Limpe o slice antes de cada iteração
-    countryNames = nil
+		for _, node := range nodes {
+			country := Country{
+				Name: node.SelectAttr("Name"),
+			}
+			countries = append(countries, country)
+		}
 
-    for _, country := range nodes {
-        var name string
-
-        for _, attr := range country.Attr {
-            if attr.Name.Local == "Name" {
-                name = attr.Value
-                break
-            }
-        }
-
-        // Adicione o nome ao slice
-        countryNames = append(countryNames, name)
-    }
-
-    // Faça o POST na API para criar os países usando Resty
-    err = createCountry(apiCountriesCreate, countryNames)
-    if err != nil {
-        log.Fatalf("Erro ao criar países via API: %s", err)
-    }
-}
+		// Printar todos os países no array
+		fmt.Println("Países encontrados:")
+		for _, c := range countries {
+			fmt.Printf(" Nome: %s\n", c.Name)
+		}
+		err = sendCountriesToAPI(countries)
+		if err != nil {
+			log.Fatalf("Erro ao enviar países para a API: %s", err)
+		}
+	}
 }
 
-func createCountry(apiEndpoint string, countryNames []string) error {
+// Função para enviar países para a API
+func sendCountriesToAPI(countries []Country) error {
 	client := resty.New()
 
-	for _, name := range countryNames {
-		
-		requestBody := map[string]string{"country_name": name}
-
-		// Faça o POST para a API
+	for _, country := range countries {
+		// Ajuste para o formato JSON esperado pela API
 		resp, err := client.R().
-			SetBody(requestBody).
-			SetResult(&map[string]interface{}{}).
-			Post(apiEndpoint)
+			SetHeader("Content-Type", "application/json").
+			SetBody(map[string]string{
+				"country_name": country.Name,
+			}).
+			Post(apiCountriesCreate)
 
 		if err != nil {
-			return fmt.Errorf("Erro ao fazer POST para a API: %s", err)
+			return fmt.Errorf("Erro ao enviar país para a API: %s", err)
 		}
 
-		if resp.StatusCode() != 200  {
-			return fmt.Errorf("Falha ao criar país via API. Código de status: %d", resp.StatusCode())
+		if resp.StatusCode() != 201 {
+			return fmt.Errorf("Erro ao enviar país para a API. Código de status: %d", resp.StatusCode())
 		}
 
-		fmt.Printf("País criado via API: %s\n", name)
+		fmt.Printf("País enviado para a API. Nome: %s\n", country.Name)
 	}
 
 	return nil
