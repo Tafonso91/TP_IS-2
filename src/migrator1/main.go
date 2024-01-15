@@ -20,7 +20,7 @@ type Country struct {
 	Name    string   `xml:"Name,attr"`
 }
 
-const apiCountriesCreate = "http://localhost:8080/country" 
+const apiCountriesCreate = "http://api-entities:8080/country" 
 
 func main() {
 	connectionString := "postgres://is:is@db-xml/is?sslmode=disable"
@@ -33,10 +33,10 @@ func main() {
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatal("Erro ao conectar ao banco de dados:", err)
+		log.Fatal("Erro ao conectar ao base de dados:", err)
 	}
 
-	fmt.Println("Conexão com o banco de dados estabelecida com sucesso!")
+	fmt.Println("Conexão com o base de dados estabelecida com sucesso!")
 
 	conn, err := amqp.Dial("amqp://is:is@broker:5672/is")
 	if err != nil {
@@ -64,54 +64,59 @@ func main() {
 		log.Fatalf("Erro ao consumir mensagens: %s", err)
 	}
 
-	for msg := range msgs {
-		fileName := string(msg.Body)
+	var countryNames []string // Mova a declaração para fora do loop principal
 
-		fmt.Printf("Nome do arquivo do XML recebido: %s\n", fileName)
+for msg := range msgs {
+    fileName := string(msg.Body)
 
-		xmlQuery := "SELECT xml FROM public.imported_documents WHERE file_name = $1"
+    fmt.Printf("Nome do arquivo do XML recebido: %s\n", fileName)
 
-		var xmlData string
-		err := db.QueryRow(xmlQuery, fileName).Scan(&xmlData)
-		if err != nil {
-			log.Fatalf("Erro ao buscar XML do banco de dados: %s", err)
-		}
+    xmlQuery := "SELECT xml FROM public.imported_documents WHERE file_name = $1"
 
-		doc, err := xmlquery.Parse(strings.NewReader(xmlData))
-		if err != nil {
-			log.Fatalf("Erro ao analisar o XML: %s", err)
-		}
+    var xmlData string
+    err := db.QueryRow(xmlQuery, fileName).Scan(&xmlData)
+    if err != nil {
+        log.Fatalf("Erro ao buscar XML do base de dados: %s", err)
+    }
 
-		// Altere a consulta XPath para capturar todos os países
-		nodes := xmlquery.Find(doc, "//Countries/Country[@Name='France']")
+    doc, err := xmlquery.Parse(strings.NewReader(xmlData))
+    if err != nil {
+        log.Fatalf("Erro ao analisar o XML: %s", err)
+    }
 
-		for _, country := range nodes {
-			var name string
+    // Altere a consulta XPath para capturar todos os países
+    nodes := xmlquery.Find(doc, "//Countries/Country")
 
-			for _, attr := range country.Attr {
-				if attr.Name.Local == "Name" {
-					name = attr.Value
-					break
-				}
-			}
+    // Limpe o slice antes de cada iteração
+    countryNames = nil
 
-			// Adicione o nome ao slice
-			countryNames := []string{name}
+    for _, country := range nodes {
+        var name string
 
-			// Faça o POST na API para criar o país usando Resty
-			err := createCountry(apiCountriesCreate, countryNames)
-			if err != nil {
-				log.Fatalf("Erro ao criar país via API: %s", err)
-			}
-		}
-	}
+        for _, attr := range country.Attr {
+            if attr.Name.Local == "Name" {
+                name = attr.Value
+                break
+            }
+        }
+
+        // Adicione o nome ao slice
+        countryNames = append(countryNames, name)
+    }
+
+    // Faça o POST na API para criar os países usando Resty
+    err = createCountry(apiCountriesCreate, countryNames)
+    if err != nil {
+        log.Fatalf("Erro ao criar países via API: %s", err)
+    }
+}
 }
 
 func createCountry(apiEndpoint string, countryNames []string) error {
 	client := resty.New()
 
 	for _, name := range countryNames {
-		// Crie a estrutura do corpo da requisição
+		
 		requestBody := map[string]string{"country_name": name}
 
 		// Faça o POST para a API
@@ -124,7 +129,7 @@ func createCountry(apiEndpoint string, countryNames []string) error {
 			return fmt.Errorf("Erro ao fazer POST para a API: %s", err)
 		}
 
-		if resp.StatusCode() != 200 {
+		if resp.StatusCode() != 200  {
 			return fmt.Errorf("Falha ao criar país via API. Código de status: %d", resp.StatusCode())
 		}
 
