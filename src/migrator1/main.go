@@ -19,7 +19,16 @@ type Country struct {
 	Name    string   `xml:",chardata"`
 }
 
-const apiCountriesCreate = "http://api-entities:8080/country"
+type Club struct {
+	XMLName xml.Name `xml:"Club"`
+	Id      string   `xml:"Id,attr"`
+	Name    string   `xml:"Name,attr"`
+}
+
+const (
+	apiCountriesCreate = "http://api-entities:8080/country"
+	apiClubsCreate     = "http://api-entities:8080/club"
+)
 
 func main() {
 	connectionString := "postgres://is:is@db-xml/is?sslmode=disable"
@@ -81,30 +90,57 @@ func main() {
 			log.Fatalf("Erro ao analisar o XML: %s", err)
 		}
 
-		nodes := xmlquery.Find(doc, "//Countries/Country")
-
-		var countries []Country
-
-		for _, node := range nodes {
-			country := Country{
-				Name: node.SelectAttr("Name"),
-			}
-			countries = append(countries, country)
-		}
-
-		// Printar todos os países no array
-		fmt.Println("Países encontrados:")
-		for _, c := range countries {
-			fmt.Printf(" Nome: %s\n", c.Name)
-		}
-		err = sendCountriesToAPI(countries)
-		if err != nil {
-			log.Fatalf("Erro ao enviar países para a API: %s", err)
-		}
+		// Process countries and send to API
+		processCountriesAndSend(doc)
+		// Process clubs and send to API
+		processClubsAndSend(doc)
 	}
 }
 
-// Função para enviar países para a API
+func processCountriesAndSend(doc *xmlquery.Node) {
+	nodes := xmlquery.Find(doc, "//Countries/Country")
+
+	var countries []Country
+
+	for _, node := range nodes {
+		country := Country{
+			Name: node.SelectAttr("Name"),
+		}
+		countries = append(countries, country)
+	}
+
+	// Printar todos os países no array
+	fmt.Println("Países encontrados:")
+	for _, c := range countries {
+		fmt.Printf(" Nome: %s\n", c.Name)
+	}
+
+	err := sendCountriesToAPI(countries)
+	if err != nil {
+		log.Fatalf("Erro ao enviar países para a API: %s", err)
+	}
+}
+
+func processClubsAndSend(doc *xmlquery.Node) {
+	clubNodes := xmlquery.Find(doc, "//Football/Teams/Club")
+
+	var clubs []Club
+
+	for _, clubNode := range clubNodes {
+		club := Club{
+			Id:   clubNode.SelectAttr("Id"),
+			Name: clubNode.SelectAttr("Name"),
+		}
+		clubs = append(clubs, club)
+	}
+
+	// Send clubs to API
+	err := sendClubsToAPI(clubs)
+	if err != nil {
+		log.Fatalf("Erro ao enviar clubes para a API: %s", err)
+	}
+}
+
 func sendCountriesToAPI(countries []Country) error {
 	client := resty.New()
 
@@ -130,3 +166,30 @@ func sendCountriesToAPI(countries []Country) error {
 
 	return nil
 }
+
+func sendClubsToAPI(clubs []Club) error {
+	client := resty.New()
+
+	for _, club := range clubs {
+		// Ajuste para o formato JSON esperado pela API
+		resp, err := client.R().
+			SetHeader("Content-Type", "application/json").
+			SetBody(map[string]string{
+				"club_name": club.Name,
+			}).
+			Post(apiClubsCreate)
+
+		if err != nil {
+			return fmt.Errorf("Erro ao enviar clube para a API: %s", err)
+		}
+
+		if resp.StatusCode() != 201 {
+			return fmt.Errorf("Erro ao enviar clube para a API. Código de status: %d", resp.StatusCode())
+		}
+
+		fmt.Printf("Clube enviado para a API. Nome: %s\n", club.Name)
+	}
+
+	return nil
+}
+
