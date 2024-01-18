@@ -24,10 +24,23 @@ type Club struct {
 	Id      string   `xml:"Id,attr"`
 	Name    string   `xml:"Name,attr"`
 }
+type StrongFoot struct {
+	XMLName xml.Name `xml:"Strong_Foot"`
+	Id      string   `xml:"Id,attr"`
+	Name    string   `xml:"Name,attr"`
+}
+type Player struct {
+	XMLName    xml.Name `xml:"Player"`
+	Id         string   `xml:"Id,attr"`
+	Name       string   `xml:"Information>Name,attr"`
+
+}
 
 const (
 	apiCountriesCreate = "http://api-entities:8080/country"
 	apiClubsCreate     = "http://api-entities:8080/club"
+	apiStrongFootCreate     = "http://api-entities:8080/strong_foot"
+	apiPlayersCreate = "http://api-entities:8080/player"
 )
 
 func main() {
@@ -94,6 +107,14 @@ func main() {
 		processCountriesAndSend(doc)
 		// Process clubs and send to API
 		processClubsAndSend(doc)
+		// Process strong_foots and send to API
+		processStrongFootAndSend(doc)
+		// Process players and send to API
+		processPlayersAndSend(doc)
+
+		
+
+
 	}
 }
 
@@ -140,6 +161,48 @@ func processClubsAndSend(doc *xmlquery.Node) {
 		log.Fatalf("Erro ao enviar clubes para a API: %s", err)
 	}
 }
+
+func processStrongFootAndSend(doc *xmlquery.Node) {
+	strongFootNodes := xmlquery.Find(doc, "//Strong_Foot/Foot")
+
+	var strongFoots []StrongFoot
+
+	for _, strongFootNode := range strongFootNodes {
+		strongFoot := StrongFoot{
+			Id:   strongFootNode.SelectAttr("Id"),
+			Name: strongFootNode.SelectAttr("Name"),
+		}
+		strongFoots = append(strongFoots, strongFoot)
+	}
+
+	// Send strong_foots to API or perform any necessary logic
+	err := sendStrongFootsToAPI(strongFoots)
+	if err != nil {
+		log.Fatalf("Erro ao enviar strong_foots para a API: %s", err)
+	}
+}
+func processPlayersAndSend(doc *xmlquery.Node) {
+    playerNodes := xmlquery.Find(doc, "//Players/Player")
+
+    var players []Player
+
+    for _, playerNode := range playerNodes {
+        player := Player{
+            Id:   playerNode.SelectAttr("Id"),
+            Name: playerNode.SelectElement("Information").SelectAttr("Name"),
+        }
+        players = append(players, player)
+    }
+
+    // Send players to API
+    err := sendPlayersToAPI(players)
+    if err != nil {
+        log.Fatalf("Erro ao enviar jogadores para a API: %s", err)
+    }
+}
+
+
+
 
 func sendCountriesToAPI(countries []Country) error {
 	client := resty.New()
@@ -192,4 +255,57 @@ func sendClubsToAPI(clubs []Club) error {
 
 	return nil
 }
+
+func sendStrongFootsToAPI(strongFoots []StrongFoot) error {
+	client := resty.New()
+
+	for _, strongFoot := range strongFoots {
+		// Ajuste para o formato JSON esperado pela API
+		resp, err := client.R().
+			SetHeader("Content-Type", "application/json").
+			SetBody(map[string]string{
+				"foot_name": strongFoot.Name,
+			}).
+			Post(apiStrongFootCreate)
+
+		if err != nil {
+			return fmt.Errorf("Erro ao enviar strong_foot para a API: %s", err)
+		}
+
+		if resp.StatusCode() != 201 {
+			return fmt.Errorf("Erro ao enviar strong_foot para a API. Código de status: %d", resp.StatusCode())
+		}
+
+		fmt.Printf("Strong_foot enviado para a API. Nome: %s\n", strongFoot.Name)
+	}
+
+	return nil
+}
+func sendPlayersToAPI(players []Player) error {
+    client := resty.New()
+
+    for _, player := range players {
+        // Ajuste para o formato JSON esperado pela API
+        resp, err := client.R().
+            SetHeader("Content-Type", "application/json").
+            SetBody(map[string]interface{}{
+                "name": player.Name,
+            }).
+            Post(apiPlayersCreate)
+
+        if err != nil {
+            return fmt.Errorf("Erro ao enviar jogador para a API: %s", err)
+        }
+
+        if resp.StatusCode() != 201 {
+            return fmt.Errorf("Erro ao enviar jogador para a API. Código de status: %d", resp.StatusCode())
+        }
+
+        fmt.Printf("Jogador enviado para a API. Nome: %s\n", player.Name)
+    }
+
+    return nil
+}
+
+
 

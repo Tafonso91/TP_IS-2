@@ -9,14 +9,22 @@ export class StrongFootController {
     async findAll() {
         return this.strong_footService.findAll();
     }
-
-
-
-
-    
-
-    
+    @Post() 
+    async createFoot(@Body() footData: { foot_name: string }) { 
+        try {
+            return await this.strong_footService.createFoot(footData);
+        } catch (error) {
+            throw new HttpException('Failed to create foot', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
+
+
+
+    
+
+    
+
 
 
 

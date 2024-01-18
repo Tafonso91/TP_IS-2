@@ -13,7 +13,6 @@ datasource db {
 model Club {
   id         String    @id @default(uuid()) @map("id")
   club_name  String
-  players    Player[]  // Campo de relação bidirecional
   createdOn  DateTime  @default(now()) @map("created_on")
   updatedOn  DateTime  @updatedAt @map("updated_on")
 
@@ -23,7 +22,7 @@ model Club {
 model Country {
   id          String    @id @default(uuid()) @map("id")
   country_name String
-  players      Player[]  // Campo de relação bidirecional
+  geom         Json?
   createdOn   DateTime  @default(now()) @map("created_on")
   updatedOn   DateTime  @updatedAt @map("updated_on")
 
@@ -33,7 +32,6 @@ model Country {
 model StrongFoot {
   id         String    @id @default(uuid()) @map("id")
   foot_name  String
-  players    Player[]  // Campo de relação bidirecional
   createdOn  DateTime  @default(now()) @map("created_on")
   updatedOn  DateTime  @updatedAt @map("updated_on")
 
@@ -44,34 +42,13 @@ model StrongFoot {
 model Player {
   id          String    @id @default(uuid()) @map("id")
   name        String
-  height      Int
-  price       String
-  salary      String
-  club        Club      @relation(fields: [club_id], references: [id])
-  club_id     String
-  country     Country   @relation(fields: [country_id], references: [id])
-  country_id  String
-  foot        StrongFoot @relation(fields: [foot_id], references: [id])
-  foot_id     String
-  playerStats PlayerStats[] 
   createdOn   DateTime  @default(now()) @map("created_on")
   updatedOn   DateTime  @updatedAt @map("updated_on")
 
   @@map("player") 
 }
 
-model PlayerStats {
-  id         String   @id @default(uuid()) @map("id")
-  overall    Int
-  potential  Int
-  offense    String
-  defense    String
-  player     Player   @relation(fields: [player_id], references: [id])
-  player_id  String
-  createdOn  DateTime  @default(now()) @map("created_on")
-  updatedOn  DateTime  @updatedAt @map("updated_on")
 
-  @@map("player_stats")
-}
+
 
 

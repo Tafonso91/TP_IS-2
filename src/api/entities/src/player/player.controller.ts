@@ -9,7 +9,14 @@ export class PlayerController {
     async findAll() {
         return this.playerService.findAll();
     }
-
+    @Post()
+    async createPlayer(@Body() playerData: { name: string}) {
+        try {
+            return await this.playerService.createPlayer(playerData);
+        } catch (error) {
+            throw new HttpException('Failed to create player', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 
 

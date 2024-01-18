@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
@@ -8,5 +8,16 @@ export class PlayerService {
     async findAll(): Promise<any[]> {
         return this.prisma.player.findMany();
     }
+
+    async createPlayer(playerData: { name: string }): Promise<any> {
+        return this.prisma.player.create({
+            data: {
+                name: playerData.name,
+            },
+        });
     }
+
+    }
+
+
  

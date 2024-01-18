@@ -8,6 +8,14 @@ export class StrongFootService {
     async findAll(): Promise<any[]> {
         return this.prisma.strongFoot.findMany();
     }
+    async createFoot(footData: { foot_name: string }): Promise<any> {
+        return this.prisma.strongFoot.create({
+            data: {
+                foot_name: footData.foot_name,
+                
+            },
+        });
+    }
 
 
  
