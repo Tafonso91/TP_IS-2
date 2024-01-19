@@ -1,3 +1,5 @@
+// player.service.ts
+
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
@@ -9,15 +11,29 @@ export class PlayerService {
         return this.prisma.player.findMany();
     }
 
-    async createPlayer(playerData: { name: string }): Promise<any> {
-        return this.prisma.player.create({
-            data: {
-                name: playerData.name,
-            },
-        });
-    }
+    async createPlayer(playerData: { name: string, country_name: string }): Promise<any> {
+        try {
+            const country = await this.prisma.country.findFirst({
+                where: { country_name: playerData.country_name },
+            });
 
+            if (!country) {
+                throw new HttpException('Country not found', HttpStatus.NOT_FOUND);
+            }
+
+            return await this.prisma.player.create({
+                data: {
+                    name: playerData.name,
+                    country: { connect: { id: country.id } },
+                },
+            });
+        } catch (error) {
+            throw new HttpException('Failed to create player', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+}
+
+
 
 
  

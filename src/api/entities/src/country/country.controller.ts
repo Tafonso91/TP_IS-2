@@ -32,6 +32,18 @@ export class CountryController {
         }
     }
 
+    @Get('find-by-name/:countryName')
+    async getCountryIdByName(@Param('countryName') countryName: string) {
+        try {
+            const countryId = await this.countryService.getCountryIdByName(countryName);
+            if (!countryId) {
+                throw new HttpException('Country not found by name', HttpStatus.NOT_FOUND);
+            }
+            return { countryId };
+        } catch (error) {
+            throw new HttpException('Failed to find country by name', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
 
 

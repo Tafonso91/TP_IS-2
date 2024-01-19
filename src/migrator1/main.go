@@ -30,11 +30,12 @@ type StrongFoot struct {
 	Name    string   `xml:"Name,attr"`
 }
 type Player struct {
-	XMLName    xml.Name `xml:"Player"`
-	Id         string   `xml:"Id,attr"`
-	Name       string   `xml:"Information>Name,attr"`
-
+    XMLName   xml.Name `xml:"Player"`
+    Id        string   `xml:"Id,attr"`
+    Name      string   `xml:"Information>Name,attr"`
+    CountryId string   
 }
+
 
 const (
 	apiCountriesCreate = "http://api-entities:8080/country"

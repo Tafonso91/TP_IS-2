@@ -26,6 +26,7 @@ model Country {
   createdOn   DateTime  @default(now()) @map("created_on")
   updatedOn   DateTime  @updatedAt @map("updated_on")
 
+ players Player[]
   @@map("country") 
 }
 
@@ -42,6 +43,8 @@ model StrongFoot {
 model Player {
   id          String    @id @default(uuid()) @map("id")
   name        String
+  country_id  String
+  country     Country @relation(fields: [country_id], references: [id])
   createdOn   DateTime  @default(now()) @map("created_on")
   updatedOn   DateTime  @updatedAt @map("updated_on")
 
