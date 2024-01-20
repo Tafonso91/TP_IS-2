@@ -20,6 +20,18 @@ def get_players_by_country():
     # Retorna os dados obtidos pela função diretamente na resposta
     return players
 
+@app.route('/api/stats_player', methods=['GET'])
+def get_players_by_stats():
+    # Configurações do servidor XML-RPC
+    server_url = 'http://rpc-server:9000'  # Substitua pelo seu URL do servidor XML-RPC
+    server = xmlrpc.client.ServerProxy(server_url)
+    nome_jogador=request.args.get("nome_jogador")
+    # Chama a função no servidor XML-RPC
+    stats = server.fetch_stats_by_player(nome_jogador)
+
+    # Retorna os dados obtidos pela função diretamente na resposta
+    return stats
+
 @app.route('/api/countries', methods=['GET'])
 def get_countries():
     # Configurações do servidor XML-RPC
@@ -91,22 +103,13 @@ def get_pt_players():
     # Configurações do servidor XML-RPC
     server_url = 'http://rpc-server:9000'  # Substitua pelo seu URL do servidor XML-RPC
     server = xmlrpc.client.ServerProxy(server_url)
-
     # Chama a função no servidor XML-RPC
     pt_players = server.lista_promessas_portugal()
 
-    # Converte a lista de tuplas para um formato que pode ser serializado para JSON
-    players_data = [{
-        "potencial": potencial,
-        "nome": nome,
-        "overall": overall,
-        "height": height,
-        "price": price,
-        "salary": salary
-    } for potencial, nome, overall, height, price, salary in pt_players]
+    # Retorna os dados obtidos pela função diretamente na resposta
+    return pt_players
 
-    # Retorna os dados em formato JSON
-    return jsonify(players_data)
+
 
 
 

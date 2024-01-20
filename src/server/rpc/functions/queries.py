@@ -79,7 +79,7 @@ class QueryFunctions:
             for jogador_over, jogador_name in zip(result, name):
                 list_jogadores.append((jogador_over, jogador_name))
 
-        # Ordenar a lista de jogadores por overall e pegar os 10 primeiros
+        
         list_jogadores.sort(reverse=True)
         list_jogadores = list_jogadores[:10]
 
@@ -89,26 +89,35 @@ class QueryFunctions:
         database = Database()
         list_promessas = []
 
+        
         dados = database.selectTudo("""
             SELECT 
-                (xpath('//Teams/Club/Players/Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Name', xml))::text[] as nome, 
-                (xpath('//Teams/Club/Players/Player[Main_Stats/@Potential > 84 and @countryRef=10]/Main_Stats/@Potential', xml))::text::integer[] as potencial, 
-                (xpath('//Teams/Club/Players/Player[Main_Stats/@Potential > 84 and @countryRef=10]/Main_Stats/@Over', xml))::text::integer[] as overall,
-                (xpath('//Teams/Club/Players/Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Height', xml))::text::integer[] as height,
-                (xpath('//Teams/Club/Players/Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Price', xml))::text[] as price,
-                (xpath('//Teams/Club/Players/Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Salary', xml))::text[] as salary
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Name', xml))::text[] as nome, 
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Main_Stats/@Potential', xml))::text::integer[] as potencial, 
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Main_Stats/@Over', xml))::text::integer[] as overall,
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Height', xml))::text::integer[] as height,
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Price', xml))::text[] as price,
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Salary', xml))::text[] as salary
             FROM imported_documents
         """)
         database.disconnect()
 
         for nome, potencial, overall, height, price, salary in dados:
             for jogador_nome, jogador_potencial, jogador_overall, jogador_height, jogador_price, jogador_salary in zip(nome, potencial, overall, height, price, salary):
-                list_promessas.append((jogador_potencial, jogador_nome, jogador_overall, jogador_height, jogador_price, jogador_salary))
+                list_promessas.append({
+                    "potencial": jogador_potencial,
+                    "nome": jogador_nome,
+                    "overall": jogador_overall,
+                    "height": jogador_height,
+                    "price": jogador_price,
+                    "salary": jogador_salary
+                })
 
-        
-        list_promessas.sort(reverse=True)
+        list_promessas.sort(key=lambda x: x["overall"], reverse=True)
 
         return list_promessas
+
+
     
     def fetch_players_by_country(self, pais):
         database = Database()
@@ -151,6 +160,47 @@ class QueryFunctions:
 
         return players
 
+    def fetch_stats_by_player(self, player_name):
+        database = Database()
+        player_stats = []
+
+        query = f"""
+            SELECT 
+                unnest(xpath('//Player[Information/@Name="{player_name}"]/Main_Stats/@Over', xml))::text as overall,
+                unnest(xpath('//Player[Information/@Name="{player_name}"]/Main_Stats/@Potential', xml))::text as potential,
+                unnest(xpath('//Player[Information/@Name="{player_name}"]/Main_Stats/@Offense', xml))::text as offense,
+                unnest(xpath('//Player[Information/@Name="{player_name}"]/Main_Stats/@Defense', xml))::text as defense,
+                unnest(xpath('//Player[Information/@Name="{player_name}"]/Atack_Stats/@Finishing', xml))::text as finishing,
+                unnest(xpath('//Player[Information/@Name="{player_name}"]/Skill_Stats/@Dribble', xml))::text as dribble,
+                unnest(xpath('//Player[Information/@Name="{player_name}"]/Movement_Stats/@Sprint', xml))::text as sprint,
+                unnest(xpath('//Player[Information/@Name="{player_name}"]/Defense_Stats/@Interception', xml))::text as interception,
+                unnest(xpath('//Player[Information/@Name="{player_name}"]/Mental_Stats/@Penalty', xml))::text as penalty
+            FROM imported_documents
+            WHERE xpath_exists('//Player[Information/@Name="{player_name}"]/Main_Stats', xml);
+        """
+
+        stats_data = database.selectTudo(query)
+        database.disconnect()
+
+        for stats in stats_data:
+            overall, potential, offense, defense, finishing, dribble, sprint, interception, penalty = stats
+            player_stats.append({
+                "overall": overall,
+                "potential": potential,
+                "offense": offense,
+                "defense": defense,
+                "finishing": finishing,
+                "dribble": dribble,
+                "sprint": sprint,
+                "interception": interception,
+                "penalty": penalty
+            })
+
+        return player_stats
+
+
+       
+        
     @staticmethod
     def lista_jogadores(nome_equipa):
         database = Database()
@@ -166,6 +216,7 @@ class QueryFunctions:
         return jogadores
 
 
+   
     @staticmethod
     def lista_estatisticas_jogador(nome_jogador, tipo_estatistica):
         database = Database()

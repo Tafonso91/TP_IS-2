@@ -11,6 +11,7 @@ const LINKS = [
     {text: 'Countries', href: '/countries', icon: People },
     {text: 'Clubs', href: '/clubs', icon: People },
     {text: 'Players', href: '/players', icon: People },
+    {text: 'Player Statistics', href: '/stats_players', icon: People },
     {text: 'Feet', href: '/feet', icon: People }
 ];
 export default LINKS;
