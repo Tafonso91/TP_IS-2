@@ -33,7 +33,7 @@ type Player struct {
     XMLName   xml.Name `xml:"Player"`
     Id        string   `xml:"Id,attr"`
     Name      string   `xml:"Information>Name,attr"`
-    CountryId string   
+    CountryId string   `xml:"countryRef,attr"`
 }
 
 
@@ -110,12 +110,10 @@ func main() {
 		processClubsAndSend(doc)
 		// Process strong_foots and send to API
 		processStrongFootAndSend(doc)
-		// Process players and send to API
+
 		processPlayersAndSend(doc)
 
 		
-
-
 	}
 }
 
@@ -182,6 +180,7 @@ func processStrongFootAndSend(doc *xmlquery.Node) {
 		log.Fatalf("Erro ao enviar strong_foots para a API: %s", err)
 	}
 }
+
 func processPlayersAndSend(doc *xmlquery.Node) {
     playerNodes := xmlquery.Find(doc, "//Players/Player")
 
@@ -189,20 +188,19 @@ func processPlayersAndSend(doc *xmlquery.Node) {
 
     for _, playerNode := range playerNodes {
         player := Player{
-            Id:   playerNode.SelectAttr("Id"),
-            Name: playerNode.SelectElement("Information").SelectAttr("Name"),
+            Id:        playerNode.SelectAttr("Id"),
+            Name:      playerNode.SelectElement("Information").SelectAttr("Name"),
+            CountryId: playerNode.SelectAttr("countryRef"),
         }
         players = append(players, player)
     }
 
     // Send players to API
-    err := sendPlayersToAPI(players)
+    err := sendPlayersToAPI(doc, players)
     if err != nil {
         log.Fatalf("Erro ao enviar jogadores para a API: %s", err)
     }
 }
-
-
 
 
 func sendCountriesToAPI(countries []Country) error {
@@ -281,32 +279,57 @@ func sendStrongFootsToAPI(strongFoots []StrongFoot) error {
 	}
 
 	return nil
+	
 }
-func sendPlayersToAPI(players []Player) error {
+func getCountryNameByRef(doc *xmlquery.Node, countryRef string) (string, error) {
+    countryNode := xmlquery.FindOne(doc, "//Countries/Country[@Id='" + countryRef + "']")
+    if countryNode != nil {
+        return countryNode.SelectAttr("Name"), nil
+    }
+    return "", fmt.Errorf("País não encontrado para o countryRef: %s", countryRef)
+}
+
+
+func sendPlayersToAPI(doc *xmlquery.Node, players []Player) error {
     client := resty.New()
 
     for _, player := range players {
+        // Buscar o nome do país no XML pelo countryRef
+        countryName, err := getCountryNameByRef(doc, player.CountryId)
+        if err != nil {
+            return fmt.Errorf("Erro ao buscar o nome do país pelo countryRef: %s", err)
+        }
+
+        // Imprimir o conteúdo de countryName para debug
+        fmt.Printf("countryName para jogador %s: %s\n", player.Name, countryName)
+
         // Ajuste para o formato JSON esperado pela API
         resp, err := client.R().
             SetHeader("Content-Type", "application/json").
-            SetBody(map[string]interface{}{
-                "name": player.Name,
+            SetBody(map[string]string{
+                "name":  player.Name,
+                "country_name": countryName,
             }).
             Post(apiPlayersCreate)
 
         if err != nil {
+            log.Printf("Erro ao enviar jogador para a API: %s\n", err)
             return fmt.Errorf("Erro ao enviar jogador para a API: %s", err)
         }
 
         if resp.StatusCode() != 201 {
+            log.Printf("Erro ao enviar jogador para a API. Código de status: %d\n", resp.StatusCode())
+            log.Printf("Resposta da API: %s\n", resp.Body())
             return fmt.Errorf("Erro ao enviar jogador para a API. Código de status: %d", resp.StatusCode())
         }
 
-        fmt.Printf("Jogador enviado para a API. Nome: %s\n", player.Name)
+        fmt.Printf("Jogador enviado para a API. Nome: %s, País: %s\n", player.Name, countryName)
     }
 
     return nil
 }
+
+
 
 
 
