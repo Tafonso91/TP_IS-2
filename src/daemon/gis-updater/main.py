@@ -1,6 +1,7 @@
 import psycopg2
 import pika
-
+import xml.etree.ElementTree as ET
+import requests
 
 # Configurações do PostgreSQL
 db_params = {
@@ -20,21 +21,66 @@ rabbitmq_params = {
 }
 
 QUEUE_NAME = 'queue'
+NOMINATIM_API_URL = 'https://nominatim.openstreetmap.org/search'
+
+def obter_coordenadas_pais(nome_pais):
+    # Consultar a API Nominatim para obter coordenadas do país
+    params = {
+        'q': nome_pais,
+        'format': 'json',
+    }
+
+    try:
+        response = requests.get(NOMINATIM_API_URL, params=params)
+        response.raise_for_status()  # Lança uma exceção em caso de erro HTTP
+
+        result = response.json()
+
+        if result:
+            coordenadas = result[0]  # Assume que o primeiro resultado é o mais relevante
+            return coordenadas['lat'], coordenadas['lon']
+        else:
+            print(f"Coordenadas não encontradas para o país: {nome_pais}")
+            return None
+
+    except requests.RequestException as e:
+        print(f"Erro ao consultar a API Nominatim: {e}")
+        return None
 
 def processar_mensagem(nome_arquivo):
-    # TODO: Lógica para processar a mensagem do GIS
     print(f"Processando mensagem para o arquivo: {nome_arquivo}")
 
-    # Exemplo: Inserir dados na base de dados PostgreSQL
     try:
         connection = psycopg2.connect(**db_params)
+        print("Conexão ao PostgreSQL estabelecida com sucesso!")
+
         cursor = connection.cursor()
+        xml_query = "SELECT xml FROM public.imported_documents WHERE file_name = %s"
+        cursor.execute(xml_query, (nome_arquivo,))
+        xml_data = cursor.fetchone()
 
-        # TODO: Adicione a lógica para manipular os dados no PostgreSQL
+        if xml_data:
+            xml_data = xml_data[0]
 
-        connection.commit()
+            # Processar o XML
+            root = ET.fromstring(xml_data)
+
+            # Extrair nomes dos países
+            countries = root.findall('.//Country')
+            for country in countries:
+                country_name = country.get('Name')
+                print(f" Country Name: {country_name}")
+
+                # Obter coordenadas do país
+                coordenadas = obter_coordenadas_pais(country_name)
+                if coordenadas:
+                    print(f" Coordenadas: {coordenadas}")
+
+        else:
+            print(f"Arquivo {nome_arquivo} não encontrado na base de dados.")
+
     except psycopg2.Error as e:
-        print(f"Erro ao conectar ao PostgreSQL: {e}")
+        print(f"Erro ao conectar ou consultar o PostgreSQL: {e}")
     finally:
         cursor.close()
         connection.close()
