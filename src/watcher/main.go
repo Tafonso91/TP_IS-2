@@ -56,7 +56,7 @@ func main() {
 
 	atualizarJSON(nomesArquivos)
 	
-	time.Sleep(5 * time.Minute)
+	time.Sleep(5 *time.Minute)
 }
 
     func enviarMensagemBroker(novosNomes []string) {
@@ -102,7 +102,54 @@ func main() {
             if err != nil {
                 log.Fatalf("Erro ao enviar mensagem para a fila: %s", err)
             }
-            fmt.Printf("Mensagem enviada para a fila: %s\n", nome)
+            fmt.Printf("Mensagem enviada para a fila(migrator): %s\n", nome)
+        }
+    }
+
+    func enviarMensagemGis(novosNomes []string) {
+        // Estabelece conexão com o servidor RabbitMQ
+        conn, err := amqp.Dial("amqp://is:is@broker:5672/is")
+        if err != nil {
+            log.Fatalf("Erro ao conectar ao servidor RabbitMQ: %s", err)
+        }
+        defer conn.Close()
+
+        // Cria um canal
+        ch, err := conn.Channel()
+        if err != nil {
+            log.Fatalf("Erro ao abrir o canal: %s", err)
+        }
+        defer ch.Close()
+
+        // Declara uma fila no RabbitMQ
+        queue, err := ch.QueueDeclare(
+            "queue", // Nome da fila
+            false,          // durable
+            false,          // delete when unused
+            false,          // exclusive
+            false,          // no-wait
+            nil,            // arguments
+        )
+        if err != nil {
+            log.Fatalf("Erro ao declarar a fila: %s", err)
+        }
+
+        // Envia cada novo nome como uma mensagem para a fila
+        for _, nome := range novosNomes {
+            err = ch.Publish(
+                "",            // exchange
+                queue.Name,    // routing key
+                false,         // mandatory
+                false,         // immediate
+                amqp.Publishing{
+                    ContentType: "text/plain",
+                    Body:        []byte(nome),
+                },
+            )
+            if err != nil {
+                log.Fatalf("Erro ao enviar mensagem para a fila: %s", err)
+            }
+            fmt.Printf("Mensagem enviada para a fila(gis-updater): %s\n", nome)
         }
     }
     func atualizarJSON(novosNomes []string) {
@@ -160,6 +207,7 @@ func main() {
     
             fmt.Println("Arquivo JSON atualizado com sucesso!")
             enviarMensagemBroker(novosArquivos)
+            enviarMensagemGis(novosArquivos)
         } else {
             fmt.Println("Não houve novos arquivos para adicionar.")
         }
