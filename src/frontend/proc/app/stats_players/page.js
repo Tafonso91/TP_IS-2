@@ -28,7 +28,7 @@ function PlayersPage() {
     setSelectedPlayer(newValue);
 
     try {
-      const result = await GET(`/player_stats?player_name=${newValue}`);
+      const result = await GET(`/stats_player?nome_jogador=${newValue}`);
       if (result.data) {
         setPlayerData(result.data);
       } else {
