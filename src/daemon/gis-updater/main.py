@@ -32,13 +32,15 @@ def obter_coordenadas_pais(nome_pais):
 
     try:
         response = requests.get(NOMINATIM_API_URL, params=params)
-        response.raise_for_status()  # Lança uma exceção em caso de erro HTTP
+        response.raise_for_status() 
 
         result = response.json()
 
         if result:
-            coordenadas = result[0]  # Assume que o primeiro resultado é o mais relevante
-            return coordenadas['lat'], coordenadas['lon']
+            coordenadas = result[0]
+            latitude = coordenadas['lat']
+            longitude = coordenadas['lon']
+            return latitude, longitude
         else:
             print(f"Coordenadas não encontradas para o país: {nome_pais}")
             return None
@@ -46,6 +48,7 @@ def obter_coordenadas_pais(nome_pais):
     except requests.RequestException as e:
         print(f"Erro ao consultar a API Nominatim: {e}")
         return None
+
 
 def processar_mensagem(nome_arquivo):
     print(f"Processando mensagem para o arquivo: {nome_arquivo}")
@@ -71,10 +74,17 @@ def processar_mensagem(nome_arquivo):
                 country_name = country.get('Name')
                 print(f" Country Name: {country_name}")
 
-                # Obter coordenadas do país
-                coordenadas = obter_coordenadas_pais(country_name)
-                if coordenadas:
-                    print(f" Coordenadas: {coordenadas}")
+                
+                latitude, longitude = obter_coordenadas_pais(country_name)
+                if latitude is not None and longitude is not None:
+                    print(f" Coordenadas: Latitude {latitude}, Longitude {longitude}")
+                    
+                    
+                    
+                else:
+                    print(f"Coordenadas não encontradas para o país: {country_name}")
+                sendToApiGis(country_name, latitude, longitude)
+
 
         else:
             print(f"Arquivo {nome_arquivo} não encontrado na base de dados.")
@@ -84,6 +94,7 @@ def processar_mensagem(nome_arquivo):
     finally:
         cursor.close()
         connection.close()
+
 
 def callback(ch, method, properties, body):
     # Mensagem recebida da fila
@@ -118,6 +129,26 @@ def consumir_fila_gis():
     except KeyboardInterrupt:
         print("Encerrando a consumação da fila.")
         connection.close()
+
+def sendToApiGis(country_name, latitude, longitude):
+    try:
+        api_gis_url = 'http://api-gis:8080/update_country_coords'
+
+        data = {
+            'country_name': country_name,
+            'latitude': latitude,
+            'longitude': longitude
+        }
+
+        response = requests.patch(api_gis_url, json=data)
+
+        if response.status_code == 200:
+            print(f"Coordenadas atualizadas com sucesso para o país: {country_name}")
+        else:
+            print(f"Falha ao atualizar coordenadas para o país: {country_name}. Resposta da API GIS: {response.text}")
+
+    except requests.RequestException as e:
+        print(f"Erro ao enviar dados para a API GIS: {e}")
 
 if __name__ == '__main__':
     consumir_fila_gis()
