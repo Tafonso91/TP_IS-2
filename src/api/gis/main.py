@@ -45,8 +45,10 @@ def get_players_with_coordinates():
             result.append({
                 "player_id": player[0],
                 "name": player[1],
-                "country_id": player[2],
-                "coordinates": player[3]
+                "salary": player[2],
+                "overall": player[3],
+                "country_id": player[4],
+                "coordinates": player[5]
             })
 
         return jsonify(result), 200

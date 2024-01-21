@@ -9,15 +9,17 @@ import {icon as leafletIcon, point} from "leaflet";
 
 const LIST_PROPERTIES = [
     {"key": "country", label: "Country", Icon: FlagIcon},
-    {"key": "number", label: "Shirt Number", Icon: ContactsIcon},
-    {"key": "position", label: "Position", Icon: PictureInPictureAltIcon}
+    {"key": "salary", label: "Salary", Icon: ContactsIcon},
+    {"key": "overall", label: "Overall", Icon: PictureInPictureAltIcon}
 ];
 
 export function ObjectMarker({geoJSON}) {
     const properties = geoJSON?.properties;
-    const {id, imgUrl, name, country, number, position} = properties;
+    const {id, imgUrl, name, country, salary, overall} = properties;
     const coordinates = geoJSON?.geometry?.coordinates;
+    
 
+    
     return (
         <Marker
             position={coordinates}
@@ -45,32 +47,39 @@ export function ObjectMarker({geoJSON}) {
                                 {country} - {coordinates[0]}, {coordinates[1]}<br/>
                                 <label style={{fontSize: "xx-small"}}>(Country - Coordinates)</label>
                             </span>}
-                        />
-                    </ListItem>
-                    <ListItem>
-                        <ListItemIcon>
-                            <ContactsIcon style={{color: "black"}}/>
-                        </ListItemIcon>
-                        <ListItemText
-                            primary={<span>
-                                Shirt Number: {number}<br/>
-                                <label style={{fontSize: "xx-small"}}>(Shirt Number)</label>
-                            </span>}
-                        />
-                    </ListItem>
-                    <ListItem>
-                        <ListItemIcon>
-                            <PictureInPictureAltIcon style={{color: "black"}}/>
-                        </ListItemIcon>
-                        <ListItemText
-                            primary={<span>
-                                Position: {position}<br/>
-                                <label style={{fontSize: "xx-small"}}>(Position)</label>
-                            </span>}
-                        />
-                    </ListItem>
-                </List>
-            </Popup>
-        </Marker>
-    )
-}
+                           />
+                           </ListItem>
+                           <ListItem>
+                             <ListItemIcon>
+                               <ContactsIcon style={{ color: "black" }} />
+                             </ListItemIcon>
+                             <ListItemText
+                               primary={
+                                 <span>
+                                   Salary: {salary}
+                                   <br />
+                                   <label style={{ fontSize: "xx-small" }}>(Salary)</label>
+                                 </span>
+                               }
+                             />
+                           </ListItem>
+                           <ListItem>
+                             <ListItemIcon>
+                               <PictureInPictureAltIcon style={{ color: "black" }} />
+                             </ListItemIcon>
+                             <ListItemText
+                               primary={
+                                 <span>
+                                   Overall: {overall}
+                                   <br />
+                                   <label style={{ fontSize: "xx-small" }}>(Overall)</label>
+                                 </span>
+                               }
+                             />
+                           </ListItem>
+                         </List>
+                       </Popup>
+                     </Marker>
+                   );
+                 }
+  

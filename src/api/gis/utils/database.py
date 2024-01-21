@@ -81,6 +81,8 @@ class Database:
                 SELECT
                     p.id,
                     p.name,
+                    p.salary,
+                    p.overall,
                     p.country_id,
                     c.geom
                 FROM
