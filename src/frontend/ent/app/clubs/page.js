@@ -20,7 +20,7 @@ export default function ClubsPage() {
 
   return (
     <main>
-      <b>Countries Page</b>: 
+      <b>Clubs Page</b>: 
       <ul>
         {clubs.map((club) => (
           <li key={club.id}>{club.club_name}</li> 

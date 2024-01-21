@@ -20,7 +20,7 @@ export default function StrongFootPage() {
 
   return (
     <main>
-      <b>Countries Page</b>: 
+      <b>Strong Foot Page</b>: 
       <ul>
         {strong_foots.map((strong_foot) => (
           <li key={strong_foot.id}>{strong_foot.foot_name}</li> 
