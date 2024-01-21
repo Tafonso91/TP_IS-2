@@ -74,9 +74,9 @@ class Database:
             print(f"\nError: {error}")
         
     
-    def selectJogadoresComCoordenadas(self):
+    def selectJogadoresComCoordenadas(self, limit=None):
         try:
-            self.connect()  
+            self.connect()
             query = """
                 SELECT
                     p.id,
@@ -87,10 +87,22 @@ class Database:
                     player p
                 INNER JOIN
                     country c ON p.country_id = c.id
+                WHERE
+                    c.geom IS NOT NULL
             """
-            return self.selectTudo(query)
+            if limit is not None:
+                query += f" LIMIT {limit}"
+
+            with self.connection.cursor() as cursor:
+                cursor.execute(query)
+                results = cursor.fetchall()
+
+            return results
+
         except psycopg2.Error as error:
-            print(f"\nError: {error}")
-        finally:
-            self.disconnect()
+            print(f"Error: {error}")
+
+       
+        
+
         

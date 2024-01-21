@@ -34,8 +34,10 @@ def update_country_coords():
 @app.route('/get_players_with_coordinates', methods=['GET'])
 def get_players_with_coordinates():
     try:
-        # Consultar jogadores e coordenadas do país
-        players_with_coordinates = db.selectJogadoresComCoordenadas()
+        limit = int(request.args.get('limit', 70))
+
+        # Consultar jogadores e coordenadas do país com base no limite
+        players_with_coordinates = db.selectJogadoresComCoordenadas(limit)
 
         # Formatar a resposta
         result = []
@@ -51,6 +53,7 @@ def get_players_with_coordinates():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=PORT)
