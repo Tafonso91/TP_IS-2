@@ -136,8 +136,8 @@ def sendToApiGis(country_name, latitude, longitude):
 
         data = {
             'country_name': country_name,
-            'latitude': latitude,
-            'longitude': longitude
+            'latitude': longitude,  
+            'longitude': latitude,
         }
 
         response = requests.patch(api_gis_url, json=data)
@@ -149,6 +149,8 @@ def sendToApiGis(country_name, latitude, longitude):
 
     except requests.RequestException as e:
         print(f"Erro ao enviar dados para a API GIS: {e}")
+
+
 
 if __name__ == '__main__':
     consumir_fila_gis()

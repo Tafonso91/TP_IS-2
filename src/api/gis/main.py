@@ -31,7 +31,7 @@ def update_country_coords():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-@app.route('/get_players_with_coordinates', methods=['GET'])
+@app.route('/api/get_players_with_coordinates', methods=['GET'])
 def get_players_with_coordinates():
     try:
         limit = int(request.args.get('limit', 70))
