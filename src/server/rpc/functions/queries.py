@@ -92,12 +92,12 @@ class QueryFunctions:
         
         dados = database.selectTudo("""
             SELECT 
-                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Name', xml))::text[] as nome, 
-                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Main_Stats/@Potential', xml))::text::integer[] as potencial, 
-                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Main_Stats/@Over', xml))::text::integer[] as overall,
-                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Height', xml))::text::integer[] as height,
-                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Price', xml))::text[] as price,
-                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=10]/Information/@Salary', xml))::text[] as salary
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=170]/Information/@Name', xml))::text[] as nome, 
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=170]/Main_Stats/@Potential', xml))::text::integer[] as potencial, 
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=170]/Main_Stats/@Over', xml))::text::integer[] as overall,
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=170]/Information/@Height', xml))::text::integer[] as height,
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=170]/Information/@Price', xml))::text[] as price,
+                (xpath('//Player[Main_Stats/@Potential > 84 and @countryRef=170]/Information/@Salary', xml))::text[] as salary
             FROM imported_documents
         """)
         database.disconnect()
