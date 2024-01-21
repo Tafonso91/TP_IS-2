@@ -35,6 +35,7 @@ type Player struct {
     Name      string   `xml:"Information>Name,attr"`
     CountryId string   `xml:"countryRef,attr"`
     Salary    string   `xml:"Information>Salary,attr"`
+	Overall    string   `xml:"Main_Stats>Over,attr"`
 }
 
 
@@ -194,6 +195,7 @@ func processPlayersAndSend(doc *xmlquery.Node) {
             Name:      playerNode.SelectElement("Information").SelectAttr("Name"),
             CountryId: playerNode.SelectAttr("countryRef"),
 			Salary:    playerNode.SelectElement("Information").SelectAttr("Salary"),
+			Overall:    playerNode.SelectElement("Main_Stats").SelectAttr("Over"),
         }
         players = append(players, player)
     }
@@ -313,6 +315,7 @@ func sendPlayersToAPI(doc *xmlquery.Node, players []Player) error {
                 "name":  player.Name,
                 "country_name": countryName,
 				"salary":       player.Salary,
+				"overall":       player.Overall,
             }).
             Post(apiPlayersCreate)
 

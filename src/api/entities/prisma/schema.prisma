@@ -44,6 +44,7 @@ model Player {
   id          String    @id @default(uuid()) @map("id")
   name        String
   salary      String
+  overall     String
   country_id  String
   country     Country @relation(fields: [country_id], references: [id])
   createdOn   DateTime  @default(now()) @map("created_on")

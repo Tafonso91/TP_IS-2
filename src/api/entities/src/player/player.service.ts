@@ -11,7 +11,7 @@ export class PlayerService {
         return this.prisma.player.findMany();
     }
 
-    async createPlayer(playerData: { name: string, country_name: string, salary: string }): Promise<any> {
+    async createPlayer(playerData: { name: string, country_name: string, salary: string, overall: string }): Promise<any> {
         try {
             const country = await this.prisma.country.findFirst({
                 where: { country_name: playerData.country_name },
@@ -25,6 +25,7 @@ export class PlayerService {
                 data: {
                     name: playerData.name,
                     salary: playerData.salary,
+                    overall: playerData.overall,
                     country: { connect: { id: country.id } },
                 },
             });

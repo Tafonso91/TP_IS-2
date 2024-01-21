@@ -13,7 +13,7 @@ export class PlayerController {
     }
 
     @Post()
-    async createPlayer(@Body() playerData: { name: string, country_name: string, salary: string }) {
+    async createPlayer(@Body() playerData: { name: string, country_name: string, salary: string, overall: string }) {
         try {
             const createdPlayer = await this.playerService.createPlayer(playerData);
             return createdPlayer;
