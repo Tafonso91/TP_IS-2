@@ -56,7 +56,7 @@ func main() {
 
 	atualizarJSON(nomesArquivos)
 	
-	time.Sleep(5 *time.Minute)
+	time.Sleep(10 *time.Minute)
 }
 
     func enviarMensagemBroker(novosNomes []string) {
